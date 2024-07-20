@@ -79,19 +79,28 @@ class Music(commands.Cog):
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
                 if self.is_youtube_playlist_url(search):
-                    return await ctx.send("Playlist do youtube ainda não suportada.")
+                    playlist_info = ydl.extract_info(search, download=False)
+                    for entry in playlist_info['entries']:
+                        url = entry['url']
+                        title = entry['title']
+                        self.queue.append((url, title))
+                    await ctx.send(f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.')
                 elif self.is_youtube_url(search):
                     info = ydl.extract_info(search, download=False)
+                    url = info['url']
+                    title = info['title']
+                    self.queue.append((url, title))
+                    await ctx.send(f'Adicionado a fila: **{title}**')
                 elif re.match(r'^https?:\/\/', search):
                     return await ctx.send("Isso não é um link do YouTube.")
                 else:
                     info = ydl.extract_info(f"ytsearch:{search}", download=False)
                     if 'entries' in info:
                         info = info['entries'][0]
-                url = info['url']
-                title = info['title']
-                self.queue.append((url, title))
-                await ctx.send(f'Adicionado a fila: **{title}**')
+                    url = info['url']
+                    title = info['title']
+                    self.queue.append((url, title))
+                    await ctx.send(f'Adicionado a fila: **{title}**')
         if not ctx.voice_client.is_playing():
             await self.play_next(ctx)
 
