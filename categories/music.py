@@ -11,6 +11,7 @@ FFMPEG_OPTIONS = {
 }
 
 YDL_OPTIONS = {
+    'ignoreerrors': True,
     'format' : 'bestaudio', 
     'noplaylist' : True
 }
@@ -56,13 +57,13 @@ class Music(commands.Cog):
         await self.exit_channel(ctx)
 
 
-    def is_youtube_url(self, url):
+    async def is_youtube_url(self, url):
         youtube_regex = re.compile(
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
         )
         return youtube_regex.match(url) is not None
     
-    def is_youtube_playlist_url(self, url):
+    async def is_youtube_playlist_url(self, url):
         playlist_regex = re.compile(
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]list=.+$'
         )
@@ -81,6 +82,8 @@ class Music(commands.Cog):
                 if self.is_youtube_playlist_url(search):
                     playlist_info = ydl.extract_info(search, download=False)
                     for entry in playlist_info['entries']:
+                        if entry is None:
+                            continue  # Ignora entradas que não puderam ser processadas
                         url = entry['url']
                         title = entry['title']
                         self.queue.append((url, title))
