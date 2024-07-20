@@ -10,7 +10,10 @@ FFMPEG_OPTIONS = {
     'options': '-vn', 'executable': 'C:/ffmpeg/ffmpeg.exe'
 }
 
-YDL_OPTIONS = {'format' : 'bestaudio', 'noplaylist' : True}
+YDL_OPTIONS = {
+    'format' : 'bestaudio', 
+    'noplaylist' : True
+}
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -58,6 +61,12 @@ class Music(commands.Cog):
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
         )
         return youtube_regex.match(url) is not None
+    
+    def is_youtube_playlist_url(self, url):
+        playlist_regex = re.compile(
+            r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]list=.+$'
+        )
+        return playlist_regex.match(url) is not None
 
     @commands.command(aliases=['p'])
     async def play(self, ctx, *, search):
@@ -69,7 +78,9 @@ class Music(commands.Cog):
 
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-                if self.is_youtube_url(search):
+                if self.is_youtube_playlist_url(search):
+                    return await ctx.send("Playlist do youtube ainda não suportada.")
+                elif self.is_youtube_url(search):
                     info = ydl.extract_info(search, download=False)
                 elif re.match(r'^https?:\/\/', search):
                     return await ctx.send("Isso não é um link do YouTube.")
