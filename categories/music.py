@@ -30,6 +30,11 @@ class Music(commands.Cog):
         else:
             await ctx.send("A fila está vazia!")
 
+    @commands.command(aliases=['clear'])
+    async def clear_queue(self, ctx):
+        self.queue.clear()
+        await ctx.send("A fila foi limpa!")
+
     async def join_channel(self, ctx):
         if ctx.author.voice:
             channel = ctx.author.voice.channel
@@ -56,14 +61,20 @@ class Music(commands.Cog):
     async def exit(self, ctx:commands.Context):
         await self.exit_channel(ctx)
 
+    @commands.command()
+    async def skip(self, ctx):
+        if ctx.voice_client and ctx.voice_client.is_playing():
+            ctx.voice_client.stop()
+            await ctx.send("Pulando")
 
-    async def is_youtube_url(self, url):
+
+    def is_youtube_url(self, url):
         youtube_regex = re.compile(
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
         )
         return youtube_regex.match(url) is not None
     
-    async def is_youtube_playlist_url(self, url):
+    def is_youtube_playlist_url(self, url):
         playlist_regex = re.compile(
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]list=.+$'
         )
@@ -88,14 +99,17 @@ class Music(commands.Cog):
                         title = entry['title']
                         self.queue.append((url, title))
                     await ctx.send(f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.')
+
                 elif self.is_youtube_url(search):
                     info = ydl.extract_info(search, download=False)
                     url = info['url']
                     title = info['title']
                     self.queue.append((url, title))
                     await ctx.send(f'Adicionado a fila: **{title}**')
+
                 elif re.match(r'^https?:\/\/', search):
                     return await ctx.send("Isso não é um link do YouTube.")
+                
                 else:
                     info = ydl.extract_info(f"ytsearch:{search}", download=False)
                     if 'entries' in info:
@@ -104,6 +118,7 @@ class Music(commands.Cog):
                     title = info['title']
                     self.queue.append((url, title))
                     await ctx.send(f'Adicionado a fila: **{title}**')
+
         if not ctx.voice_client.is_playing():
             await self.play_next(ctx)
 
@@ -115,12 +130,6 @@ class Music(commands.Cog):
             await ctx.send(f'Tocando agora: **{title}**')
         else:
             await ctx.send("A fila está vazia!")
-
-    @commands.command()
-    async def skip(self, ctx):
-        if ctx.voice_client and ctx.voice_client.is_playing():
-            ctx.voice_client.stop()
-            await ctx.send("Pulando")
 
 
 async def setup(bot):
