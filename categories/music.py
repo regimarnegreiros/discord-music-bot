@@ -11,6 +11,8 @@ FFMPEG_OPTIONS = {
 }
 
 YDL_OPTIONS = {
+    # 'extract_flat': True,
+    # 'quiet': True,
     'ignoreerrors': True,
     'format' : 'bestaudio', 
     'noplaylist' : True
@@ -80,6 +82,12 @@ class Music(commands.Cog):
         )
         return playlist_regex.match(url) is not None
 
+    # Função assíncrona que extrai informações da playlist
+    async def extract_playlist_info(self, url):
+        loop = asyncio.get_running_loop()
+        # Executa a função síncrona em um thread pool
+        return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info(url, download=False))
+
     @commands.command(aliases=['p'])
     async def play(self, ctx, *, search):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
@@ -91,17 +99,22 @@ class Music(commands.Cog):
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
                 if self.is_youtube_playlist_url(search):
-                    playlist_info = ydl.extract_info(search, download=False)
+                    playlist_info = await self.extract_playlist_info(search)
                     for entry in playlist_info['entries']:
                         if entry is None:
                             continue  # Ignora entradas que não puderam ser processadas
                         url = entry['url']
                         title = entry['title']
                         self.queue.append((url, title))
+                        await ctx.send(f'Adicionada à fila: **{title}**')
+                        if not ctx.voice_client.is_playing():
+                            await ctx.send('Começando a tocar playlist!')
+                            await self.play_next(ctx)
+                            
                     await ctx.send(f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.')
 
                 elif self.is_youtube_url(search):
-                    info = ydl.extract_info(search, download=False)
+                    info = await asyncio.to_thread(ydl.extract_info, search, download=False)
                     url = info['url']
                     title = info['title']
                     self.queue.append((url, title))
@@ -111,7 +124,7 @@ class Music(commands.Cog):
                     return await ctx.send("Isso não é um link do YouTube.")
                 
                 else:
-                    info = ydl.extract_info(f"ytsearch:{search}", download=False)
+                    info = await asyncio.to_thread(ydl.extract_info, f"ytsearch:{search}", download=False)
                     if 'entries' in info:
                         info = info['entries'][0]
                     url = info['url']
