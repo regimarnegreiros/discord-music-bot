@@ -33,7 +33,7 @@ async def on_ready():
         status=discord.Status.do_not_disturb, 
         activity=discord.Activity(type=discord.ActivityType.watching, name="dogs")
     )
-    print("Funcionando.")
+    print(f'Conectado como {bot.user} (ID: {bot.user.id})')
 
 
 async def main():

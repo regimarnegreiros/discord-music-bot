@@ -11,11 +11,18 @@ FFMPEG_OPTIONS = {
 }
 
 YDL_OPTIONS = {
-    # 'extract_flat': True,
-    # 'quiet': True,
+    'quiet': True,
     'ignoreerrors': True,
-    'format' : 'bestaudio', 
-    'noplaylist' : True
+    'format': 'bestaudio',
+    'noplaylist': True
+}
+
+YDL_OPTIONS_FLAT = {
+    'extract_flat': 'in_playlist',
+    'quiet': True,
+    'ignoreerrors': True,
+    'format': 'bestaudio',
+    'noplaylist': True
 }
 
 class Music(commands.Cog):
@@ -27,8 +34,13 @@ class Music(commands.Cog):
     @commands.command(aliases=['fila'])
     async def queue(self, ctx):
         if self.queue:
-            queue_list = '\n'.join([f'{idx+1}. **{title}**' for idx, (_, title) in enumerate(self.queue)])
-            await ctx.send(f'Fila de músicas:\n{queue_list}')
+            if len(self.queue) > 20:
+                queue_list = '\n'.join([f'{idx+1}. **{title}**' for idx, (_, title) in enumerate(self.queue[:20])])
+                remaining_songs = len(self.queue) - 20
+                await ctx.send(f'Fila de músicas (mostrando as primeiras 20):\n{queue_list}\n...e mais {remaining_songs} músicas na fila.')
+            else:
+                queue_list = '\n'.join([f'{idx+1}. **{title}**' for idx, (_, title) in enumerate(self.queue)])
+                await ctx.send(f'Fila de músicas:\n{queue_list}')
         else:
             await ctx.send("A fila está vazia!")
 
@@ -47,28 +59,29 @@ class Music(commands.Cog):
             await ctx.send("Você precisa estar em um canal de voz para usar este comando.")
             return False
 
-    @commands.command()
+    @commands.command(aliases=['entrar', 'connect'])
     async def join(self, ctx:commands.Context):
         await self.join_channel(ctx)
 
     async def exit_channel(self, ctx):
         voice_client = ctx.guild.voice_client
         if voice_client:
+            if voice_client.is_playing():
+                voice_client.stop()
             await voice_client.disconnect()
             await ctx.send("Saindo do canal de voz.")
         else:
             await ctx.send("O bot não está atualmente em um canal de voz.")
 
-    @commands.command()
+    @commands.command(aliases=['sair', 'disconnect'])
     async def exit(self, ctx:commands.Context):
         await self.exit_channel(ctx)
 
-    @commands.command()
+    @commands.command(aliases=['pular'])
     async def skip(self, ctx):
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.stop()
             await ctx.send("Pulando")
-
 
     def is_youtube_url(self, url):
         youtube_regex = re.compile(
@@ -86,7 +99,7 @@ class Music(commands.Cog):
     async def extract_playlist_info(self, url):
         loop = asyncio.get_running_loop()
         # Executa a função síncrona em um thread pool
-        return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info(url, download=False))
+        return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
 
     @commands.command(aliases=['p'])
     async def play(self, ctx, *, search):
@@ -100,18 +113,25 @@ class Music(commands.Cog):
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
                 if self.is_youtube_playlist_url(search):
                     playlist_info = await self.extract_playlist_info(search)
+                    await ctx.send(f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.')
+                    
                     for entry in playlist_info['entries']:
                         if entry is None:
                             continue  # Ignora entradas que não puderam ser processadas
-                        url = entry['url']
-                        title = entry['title']
-                        self.queue.append((url, title))
-                        await ctx.send(f'Adicionada à fila: **{title}**')
-                        if not ctx.voice_client.is_playing():
-                            await ctx.send('Começando a tocar playlist!')
-                            await self.play_next(ctx)
+
+                        try:
+                            song_info = await self.extract_playlist_info(entry['url'])
+                            url = song_info['url']
+                            title = song_info['title']
+                            self.queue.append((url, title))
+                            # await ctx.send(f'Adicionada à fila: **{title}**')
                             
-                    await ctx.send(f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.')
+                            if not ctx.voice_client.is_playing():
+                                await self.play_next(ctx)
+
+                        except Exception as e:
+                            print(f'Erro ao processar uma música: {e}')
+                            continue  # Continua com a próxima entrada na playlist
 
                 elif self.is_youtube_url(search):
                     info = await asyncio.to_thread(ydl.extract_info, search, download=False)
