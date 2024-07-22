@@ -160,7 +160,7 @@ class Music(commands.Cog):
         # Executa a função síncrona em um thread pool
         return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
 
-    @commands.command(aliases=['p'])
+    @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.")
     async def play(self, ctx:commands.Context, *, search):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
         if not voice_channel:
