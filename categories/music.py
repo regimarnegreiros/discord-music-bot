@@ -49,21 +49,17 @@ class Music(commands.Cog):
         self.queue.clear()
         await ctx.send("A fila foi limpa!")
 
-    async def join_channel(self, ctx):
+    @commands.command(aliases=['entrar', 'connect'])
+    async def join(self, ctx:commands.Context):
         if ctx.author.voice:
             channel = ctx.author.voice.channel
             await channel.connect(timeout=30.0, reconnect=True)
             await ctx.send(f"Conectado ao canal de voz: {channel.name}")
-            return True
         else:
             await ctx.send("Você precisa estar em um canal de voz para usar este comando.")
-            return False
 
-    @commands.command(aliases=['entrar', 'connect'])
-    async def join(self, ctx:commands.Context):
-        await self.join_channel(ctx)
-
-    async def exit_channel(self, ctx):
+    @commands.command(aliases=['sair', 'disconnect'])
+    async def exit(self, ctx:commands.Context):
         voice_client = ctx.guild.voice_client
         if voice_client:
             if voice_client.is_playing():
@@ -72,11 +68,7 @@ class Music(commands.Cog):
             await ctx.send("Saindo do canal de voz.")
         else:
             await ctx.send("O bot não está atualmente em um canal de voz.")
-
-    @commands.command(aliases=['sair', 'disconnect'])
-    async def exit(self, ctx:commands.Context):
-        await self.exit_channel(ctx)
-
+        
     @commands.command(aliases=['pular'])
     async def skip(self, ctx):
         if ctx.voice_client and ctx.voice_client.is_playing():
@@ -108,6 +100,7 @@ class Music(commands.Cog):
             return await ctx.send("Você precisa estar em um canal de voz para usar este comando.")
         if not ctx.voice_client:
             await voice_channel.connect()
+            print(f"Conectado ao canal de voz: {voice_channel.name}")
 
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
@@ -126,7 +119,7 @@ class Music(commands.Cog):
                             self.queue.append((url, title))
                             # await ctx.send(f'Adicionada à fila: **{title}**')
                             
-                            if not ctx.voice_client.is_playing():
+                            if ctx.voice_client and ctx.voice_client.is_connected() and not ctx.voice_client.is_playing():
                                 await self.play_next(ctx)
 
                         except Exception as e:
@@ -156,13 +149,28 @@ class Music(commands.Cog):
             await self.play_next(ctx)
 
     async def play_next(self, ctx):
-        if self.queue:
-            url, title = self.queue.pop(0)
-            source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
-            ctx.voice_client.play(source, after=lambda _: self.bot.loop.create_task(self.play_next(ctx)))
-            await ctx.send(f'Tocando agora: **{title}**')
-        else:
-            await ctx.send("A fila está vazia!")
+        if ctx.voice_client and ctx.voice_client.is_connected():
+            if self.queue:
+                url, title = self.queue.pop(0)
+                source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
+                ctx.voice_client.play(source, after=lambda _: self.bot.loop.create_task(self.play_next(ctx)))
+                await ctx.send(f'Tocando agora: **{title}**')
+            else:
+                await ctx.send("A fila está vazia!")
+
+    ## Eventos
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        bot_voice_state = member.guild.voice_client
+
+        if bot_voice_state and before.channel == bot_voice_state.channel and after.channel != bot_voice_state.channel:
+            await asyncio.sleep(60)
+            # Verificar o número de membros após o delay
+            if len(bot_voice_state.channel.members) == 1:
+                if bot_voice_state.is_playing():
+                    bot_voice_state.stop()
+                
+                await bot_voice_state.disconnect()
 
 
 async def setup(bot):
