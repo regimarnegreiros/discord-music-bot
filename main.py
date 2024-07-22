@@ -25,6 +25,10 @@ async def load_cogs():
 async def ping(ctx:commands.Context):
     await ctx.send("Pong 🏓")
 
+@bot.tree.command()
+async def ping(interact:discord.Interaction):
+    await interact.response.send_message("Pong Slash 🏓")
+
 # Remover o comando de ajuda padrão:
 bot.remove_command('help')
 
@@ -91,6 +95,7 @@ async def on_voice_state_update(member, before, after):
 @bot.event
 async def on_ready():
     await load_cogs()
+    await bot.tree.sync()
     await bot.change_presence(
         status=discord.Status.do_not_disturb, 
         activity=discord.Activity(type=discord.ActivityType.watching, name="dogs")
