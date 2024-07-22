@@ -33,7 +33,7 @@ class Music(commands.Cog):
         self.queue = []
         super().__init__()
 
-    @commands.command(aliases=['fila'])
+    @commands.hybrid_command(aliases=['fila'], description="Pula para a próxima música na fila.")
     async def queue(self, ctx):
         if self.queue:
             if len(self.queue) > 20:
@@ -50,7 +50,7 @@ class Music(commands.Cog):
             )
             await ctx.send(embed=embed)
 
-    @commands.command(aliases=['clear', 'limpar'])
+    @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
     async def clear_queue(self, ctx:commands.Context):
         self.queue.clear()
         embed = discord.Embed(
@@ -59,12 +59,45 @@ class Music(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.command(aliases=['entrar', 'connect'])
+    @commands.hybrid_command(aliases=['entrar', 'connect'], description="Faz o bot entrar no canal de voz.")
     async def join(self, ctx:commands.Context):
         if ctx.author.voice:
             channel = ctx.author.voice.channel
-            await channel.connect(timeout=30.0, reconnect=True)
-            await ctx.message.add_reaction('✅')
+            if ctx.voice_client:
+                if ctx.voice_client.channel == channel:
+                    # O bot já está conectado ao canal de voz do usuário
+                    if ctx.interaction:
+                        embed = discord.Embed(
+                            description="Já estou conectado a este canal de voz!",
+                            color=discord.Color.green()
+                        )
+                        await ctx.send(embed=embed)
+                    else:
+                        await ctx.message.add_reaction('✅')
+                else:
+                    # O bot está conectado a outro canal, desconectar e conectar-se ao novo canal
+                    await ctx.voice_client.move_to(channel)
+                    if ctx.interaction:
+                        embed = discord.Embed(
+                            description="Conectado ao canal de voz!",
+                            color=discord.Color.green()
+                        )
+                        message = await ctx.send(embed=embed)
+                        await message.add_reaction('✅')
+                    else:
+                        await ctx.message.add_reaction('✅')
+            else:
+                # O bot não está conectado a nenhum canal
+                await channel.connect(timeout=30.0, reconnect=True)
+                if ctx.interaction:
+                    embed = discord.Embed(
+                        description="Conectado ao canal de voz!",
+                        color=discord.Color.green()
+                    )
+                    message = await ctx.send(embed=embed)
+                    await message.add_reaction('✅')
+                else:
+                    await ctx.message.add_reaction('✅')
         else:
             embed = discord.Embed(
                 description="Você precisa estar em um canal de voz para usar este comando!",
@@ -72,14 +105,22 @@ class Music(commands.Cog):
             )
             await ctx.send(embed=embed)
 
-    @commands.command(aliases=['sair', 'disconnect'])
+    @commands.hybrid_command(aliases=['sair', 'disconnect'], description="Faz o bot sair do canal de voz.")
     async def exit(self, ctx:commands.Context):
         voice_client = ctx.guild.voice_client
         if voice_client:
             if voice_client.is_playing():
                 voice_client.stop()
             await voice_client.disconnect()
-            await ctx.message.add_reaction('👋')
+            if ctx.interaction:
+                embed = discord.Embed(
+                    description="Saindo do canal de voz!",
+                    color=discord.Color.green()
+                )
+                message = await ctx.send(embed=embed)
+                await message.add_reaction('👋')
+            else:
+                await ctx.message.add_reaction('👋')
         else:
             embed = discord.Embed(
                 description="O bot não está atualmente em um canal de voz!",
@@ -87,11 +128,19 @@ class Music(commands.Cog):
             )
             await ctx.send(embed=embed)
         
-    @commands.command(aliases=['pular', 'next'])
+    @commands.hybrid_command(aliases=['pular', 'next'], description="Pula para a próxima música na fila.")
     async def skip(self, ctx:commands.Context):
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.stop()
-            await ctx.message.add_reaction('⏭️')
+            if ctx.interaction:
+                embed = discord.Embed(
+                    description="Pulando música!",
+                    color=discord.Color.blue()
+                )
+                message = await ctx.send(embed=embed)
+                await message.add_reaction('⏭️')
+            else:
+                await ctx.message.add_reaction('⏭️')
 
     def is_youtube_url(self, url):
         youtube_regex = re.compile(

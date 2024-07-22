@@ -21,18 +21,14 @@ async def load_cogs():
 
 
 ## Comandos gerais:
-@bot.command()
+@bot.hybrid_command(description="Responde o usuário com pong.")
 async def ping(ctx:commands.Context):
     await ctx.send("Pong 🏓")
-
-@bot.tree.command()
-async def ping(interact:discord.Interaction):
-    await interact.response.send_message("Pong Slash 🏓")
 
 # Remover o comando de ajuda padrão:
 bot.remove_command('help')
 
-@bot.command(aliases=['ajuda', 'h'])
+@bot.hybrid_command(aliases=['ajuda', 'h'], description="Exibe os comandos exitentes.")
 async def help(ctx:commands.Context):
     embed = discord.Embed(
         title="Comandos de Música",
@@ -56,7 +52,7 @@ async def help(ctx:commands.Context):
     )
     embed.add_field(
         name="-clear",
-        value="Limpa a fila de músicas\nComandos alternativos: -limpar, -clear_queue",
+        value="Limpa a fila de músicas.\nComandos alternativos: -limpar, -clear_queue",
         inline=False
     )
     embed.add_field(
