@@ -5,6 +5,8 @@ import yt_dlp
 import asyncio
 import re
 
+from config import COLOR
+
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
     'options': '-vn', 'executable': 'C:/ffmpeg/ffmpeg.exe'
@@ -117,13 +119,13 @@ class Music(commands.Cog):
                             url = song_info['url']
                             title = song_info['title']
                             self.queue.append((url, title))
-                            # await ctx.send(f'Adicionada à fila: **{title}**')
+                            print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
                             
                             if ctx.voice_client and ctx.voice_client.is_connected() and not ctx.voice_client.is_playing():
                                 await self.play_next(ctx)
 
                         except Exception as e:
-                            print(f'Erro ao processar uma música: {e}')
+                            print(f'{COLOR["RED"]}ERROR: {COLOR["RESET"]}{e}')
                             continue  # Continua com a próxima entrada na playlist
 
                 elif self.is_youtube_url(search):
@@ -132,6 +134,7 @@ class Music(commands.Cog):
                     title = info['title']
                     self.queue.append((url, title))
                     await ctx.send(f'Adicionado a fila: **{title}**')
+                    print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
 
                 elif re.match(r'^https?:\/\/', search):
                     return await ctx.send("Isso não é um link do YouTube.")
@@ -144,6 +147,7 @@ class Music(commands.Cog):
                     title = info['title']
                     self.queue.append((url, title))
                     await ctx.send(f'Adicionado a fila: **{title}**')
+                    print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
 
         if not ctx.voice_client.is_playing():
             await self.play_next(ctx)

@@ -4,7 +4,8 @@ from discord import app_commands
 import os
 import asyncio
 
-from config import token
+from BOT_TOKEN import token
+from config import COLOR
 
 ## Configuração do bot:
 permissions = discord.Intents.default()
@@ -23,6 +24,24 @@ async def load_cogs():
 @bot.command()
 async def ping(ctx:commands.Context):
     await ctx.send("Pong 🏓")
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    # Verificar se o usuário entrou em um canal de voz
+    if before.channel is None and after.channel is not None:
+        channel_name = after.channel.name
+        print(f'{COLOR["BOLD_WHITE"]}{member.display_name}{COLOR["RESET"]} entrou: {COLOR["BOLD_WHITE"]}{channel_name}{COLOR["RESET"]}')
+
+    # Verificar se o usuário saiu de um canal de voz
+    elif before.channel is not None and after.channel is None:
+        channel_name = before.channel.name
+        print(f'{COLOR["BOLD_WHITE"]}{member.display_name}{COLOR["RESET"]} saiu: {COLOR["BOLD_WHITE"]}{channel_name}{COLOR["RESET"]}')
+
+    # Verificar se o usuário mudou de canal de voz
+    elif before.channel is not None and after.channel is not None and before.channel != after.channel:
+        old_channel_name = before.channel.name
+        new_channel_name = after.channel.name
+        print(f'{COLOR["BOLD_WHITE"]}{member.display_name}{COLOR["RESET"]} trocou: {COLOR["BOLD_WHITE"]}{old_channel_name}{COLOR["RESET"]} para {COLOR["BOLD_WHITE"]}{new_channel_name}{COLOR["RESET"]}')
 
 
 ## Ao ligar:
