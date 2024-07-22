@@ -37,28 +37,40 @@ class Music(commands.Cog):
     async def queue(self, ctx):
         if self.queue:
             if len(self.queue) > 20:
-                queue_list = '\n'.join([f'{idx+1}. **{title}**' for idx, (_, title) in enumerate(self.queue[:20])])
+                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title) in enumerate(self.queue[:20])])
                 remaining_songs = len(self.queue) - 20
-                await ctx.send(f'Fila de músicas (mostrando as primeiras 20):\n{queue_list}\n...e mais {remaining_songs} músicas na fila.')
+                await ctx.send(f'```Fila de músicas:\n{queue_list}\n...e mais {remaining_songs} músicas na fila.```')
             else:
-                queue_list = '\n'.join([f'{idx+1}. **{title}**' for idx, (_, title) in enumerate(self.queue)])
-                await ctx.send(f'Fila de músicas:\n{queue_list}')
+                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title) in enumerate(self.queue)])
+                await ctx.send(f'```Fila de músicas:\n{queue_list}```')
         else:
-            await ctx.send("A fila está vazia!")
+            embed = discord.Embed(
+                description="A fila está vazia!",
+                color=discord.Color.blue()
+            )
+            await ctx.send(embed=embed)
 
-    @commands.command(aliases=['clear'])
-    async def clear_queue(self, ctx):
+    @commands.command(aliases=['clear', 'limpar'])
+    async def clear_queue(self, ctx:commands.Context):
         self.queue.clear()
-        await ctx.send("A fila foi limpa!")
+        embed = discord.Embed(
+            description="A fila foi limpa!",
+            color=discord.Color.blue()
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(aliases=['entrar', 'connect'])
     async def join(self, ctx:commands.Context):
         if ctx.author.voice:
             channel = ctx.author.voice.channel
             await channel.connect(timeout=30.0, reconnect=True)
-            await ctx.send(f"Conectado ao canal de voz: {channel.name}")
+            await ctx.message.add_reaction('✅')
         else:
-            await ctx.send("Você precisa estar em um canal de voz para usar este comando.")
+            embed = discord.Embed(
+                description="Você precisa estar em um canal de voz para usar este comando!",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed)
 
     @commands.command(aliases=['sair', 'disconnect'])
     async def exit(self, ctx:commands.Context):
@@ -67,15 +79,19 @@ class Music(commands.Cog):
             if voice_client.is_playing():
                 voice_client.stop()
             await voice_client.disconnect()
-            await ctx.send("Saindo do canal de voz.")
+            await ctx.message.add_reaction('👋')
         else:
-            await ctx.send("O bot não está atualmente em um canal de voz.")
+            embed = discord.Embed(
+                description="O bot não está atualmente em um canal de voz!",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed)
         
-    @commands.command(aliases=['pular'])
-    async def skip(self, ctx):
+    @commands.command(aliases=['pular', 'next'])
+    async def skip(self, ctx:commands.Context):
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.stop()
-            await ctx.send("Pulando")
+            await ctx.message.add_reaction('⏭️')
 
     def is_youtube_url(self, url):
         youtube_regex = re.compile(
@@ -96,19 +112,27 @@ class Music(commands.Cog):
         return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
 
     @commands.command(aliases=['p'])
-    async def play(self, ctx, *, search):
+    async def play(self, ctx:commands.Context, *, search):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
         if not voice_channel:
-            return await ctx.send("Você precisa estar em um canal de voz para usar este comando.")
+            embed = discord.Embed(
+                description="Você precisa estar em um canal de voz para usar este comando!",
+                color=discord.Color.red()
+            )
+            return await ctx.send(embed=embed)
         if not ctx.voice_client:
             await voice_channel.connect()
-            print(f"Conectado ao canal de voz: {voice_channel.name}")
+            print(f"{COLOR["BOLD_WHITE"]}Conectado ao canal de voz: {COLOR["RESET"]}{voice_channel.name}")
 
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
                 if self.is_youtube_playlist_url(search):
                     playlist_info = await self.extract_playlist_info(search)
-                    await ctx.send(f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.')
+                    embed = discord.Embed(
+                        description=f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.',
+                        color=discord.Color.blue()
+                    )
+                    await ctx.send(embed=embed)
                     
                     for entry in playlist_info['entries']:
                         if entry is None:
@@ -133,11 +157,19 @@ class Music(commands.Cog):
                     url = info['url']
                     title = info['title']
                     self.queue.append((url, title))
-                    await ctx.send(f'Adicionado a fila: **{title}**')
+                    embed = discord.Embed(
+                        description=f'Adicionado a fila: **{title}**',
+                        color=discord.Color.blue()
+                    )
+                    await ctx.send(embed=embed)
                     print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
 
                 elif re.match(r'^https?:\/\/', search):
-                    return await ctx.send("Isso não é um link do YouTube.")
+                    embed = discord.Embed(
+                        description="Isso não é um link do YouTube!",
+                        color= discord.Color.red()
+                    )
+                    return await ctx.send(embed=embed)
                 
                 else:
                     info = await asyncio.to_thread(ydl.extract_info, f"ytsearch:{search}", download=False)
@@ -146,21 +178,34 @@ class Music(commands.Cog):
                     url = info['url']
                     title = info['title']
                     self.queue.append((url, title))
-                    await ctx.send(f'Adicionado a fila: **{title}**')
+                    embed = discord.Embed(
+                        description=f'Adicionado a fila: **{title}**',
+                        color=discord.Color.blue()
+                    )
+                    await ctx.send(embed=embed)
                     print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
 
         if not ctx.voice_client.is_playing():
             await self.play_next(ctx)
 
-    async def play_next(self, ctx):
+    async def play_next(self, ctx:commands.Context):
         if ctx.voice_client and ctx.voice_client.is_connected():
             if self.queue:
                 url, title = self.queue.pop(0)
                 source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
                 ctx.voice_client.play(source, after=lambda _: self.bot.loop.create_task(self.play_next(ctx)))
-                await ctx.send(f'Tocando agora: **{title}**')
+                embed = discord.Embed(
+                    title="Tocando agora",
+                    description=f'{title}',
+                    color= discord.Color.blue()
+                )
+                await ctx.send(embed=embed)
             else:
-                await ctx.send("A fila está vazia!")
+                embed = discord.Embed(
+                    description="A fila está vazia!",
+                    color=discord.Color.blue()
+                )
+                await ctx.send(embed=embed)
 
     ## Eventos
     @commands.Cog.listener()

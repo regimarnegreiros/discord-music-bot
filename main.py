@@ -25,6 +25,49 @@ async def load_cogs():
 async def ping(ctx:commands.Context):
     await ctx.send("Pong 🏓")
 
+# Remover o comando de ajuda padrão:
+bot.remove_command('help')
+
+@bot.command(aliases=['ajuda', 'h'])
+async def help(ctx:commands.Context):
+    embed = discord.Embed(
+        title="Comandos de Música",
+        color=discord.Color.blue()
+    )
+
+    embed.add_field(
+        name="-play [link/nome da música]",
+        value="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.\nComando alternativo: -p",
+        inline=False
+    )
+    embed.add_field(
+        name="-skip",
+        value="Pula para a próxima música na fila. \nComandos alternativos: -pular, -next",
+        inline=False
+    )
+    embed.add_field(
+        name="-queue",
+        value="Mostra a fila de músicas.\nComando alternativo: -fila",
+        inline=False
+    )
+    embed.add_field(
+        name="-clear",
+        value="Limpa a fila de músicas\nComandos alternativos: -limpar, -clear_queue",
+        inline=False
+    )
+    embed.add_field(
+        name="-join",
+        value="Faz o bot entrar no canal de voz.\nComandos alternativos: -entrar, -connect",
+        inline=False
+    )
+    embed.add_field(
+        name="-exit",
+        value="Faz o bot sair do canal de voz.\nComandos alternativos: -sair, -disconnect",
+        inline=False
+    )
+
+    await ctx.send(embed=embed)
+
 @bot.event
 async def on_voice_state_update(member, before, after):
     # Verificar se o usuário entrou em um canal de voz
