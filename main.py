@@ -51,6 +51,10 @@ async def help(ctx:commands.Context):
         inline=False
     )
     embed.add_field(
+        name="-remove [index]",
+        value="Remove uma música da fila pelo índice.\nComando alternativo: -remover"
+    )
+    embed.add_field(
         name="-clear",
         value="Limpa a fila de músicas.\nComandos alternativos: -limpar, -clear_queue",
         inline=False

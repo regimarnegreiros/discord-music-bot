@@ -33,7 +33,7 @@ class Music(commands.Cog):
         self.queue = []
         super().__init__()
 
-    @commands.hybrid_command(aliases=['fila'], description="Pula para a próxima música na fila.")
+    @commands.hybrid_command(aliases=['fila'], description="Mostra a fila de músicas.")
     async def queue(self, ctx):
         if self.queue:
             if len(self.queue) > 20:
@@ -98,6 +98,10 @@ class Music(commands.Cog):
                     await message.add_reaction('✅')
                 else:
                     await ctx.message.add_reaction('✅')
+                
+                if not ctx.voice_client.is_playing():
+                    await self.play_next(ctx) # Volta a tocar caso tenha músicas na fila
+
         else:
             embed = discord.Embed(
                 description="Você precisa estar em um canal de voz para usar este comando!",
@@ -255,6 +259,22 @@ class Music(commands.Cog):
                     color=discord.Color.blue()
                 )
                 await ctx.send(embed=embed)
+
+    @commands.hybrid_command(aliases=['remover'], description="Remove uma música da fila pelo índice.")
+    async def remove(self, ctx: commands.Context, index: int):
+        if index < 1 or index > len(self.queue):
+            embed = discord.Embed(
+                description="Índice inválido. Por favor, forneça um índice válido.",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed)
+        else:
+            removed_song = self.queue.pop(index - 1)
+            embed = discord.Embed(
+                description=f'Removido da fila: **{removed_song[1]}**',
+                color=discord.Color.blue()
+            )
+            await ctx.send(embed=embed)
 
     ## Eventos
     @commands.Cog.listener()
