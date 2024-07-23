@@ -52,12 +52,17 @@ async def help(ctx:commands.Context):
     )
     embed.add_field(
         name="-remove [index]",
-        value="Remove uma música da fila pelo índice.\nComando alternativo: -remover"
+        value="Remove uma música da fila pelo índice.\nComando alternativo: -remover",
+        inline=False
     )
     embed.add_field(
         name="-clear",
         value="Limpa a fila de músicas.\nComandos alternativos: -limpar, -clear_queue",
         inline=False
+    )
+    embed.add_field(
+        name="-random",
+        value="Embaralha a fila de músicas.\nComandos alternativos: -embaralhar, -aleatorizar"
     )
     embed.add_field(
         name="-join",

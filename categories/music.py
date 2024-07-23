@@ -4,6 +4,7 @@ from discord import app_commands
 import yt_dlp
 import asyncio
 import re
+import random
 
 from config import COLOR
 
@@ -272,6 +273,22 @@ class Music(commands.Cog):
             removed_song = self.queue.pop(index - 1)
             embed = discord.Embed(
                 description=f'Removido da fila: **{removed_song[1]}**',
+                color=discord.Color.blue()
+            )
+            await ctx.send(embed=embed)
+
+    @commands.hybrid_command(aliases=['embaralhar', 'aleatorizar'], description="Embaralha a fila de músicas.")
+    async def random(self, ctx: commands.Context):
+        if not self.queue:
+            embed = discord.Embed(
+                description="A fila está vazia!",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed)
+        else:
+            random.shuffle(self.queue)
+            embed = discord.Embed(
+                description="A fila de músicas foi embaralhada!",
                 color=discord.Color.blue()
             )
             await ctx.send(embed=embed)
