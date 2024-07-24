@@ -9,14 +9,14 @@ import random
 from config import COLOR
 
 FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -timeout 3000000 -nostdin',
     'options': '-vn', 'executable': 'C:/ffmpeg/ffmpeg.exe'
 }
 
 YDL_OPTIONS = {
     'quiet': True,
     'ignoreerrors': True,
-    'format': 'bestaudio',
+    'format': 'bestaudio/best',
     'noplaylist': True
 }
 
@@ -24,7 +24,7 @@ YDL_OPTIONS_FLAT = {
     'extract_flat': 'in_playlist',
     'quiet': True,
     'ignoreerrors': True,
-    'format': 'bestaudio',
+    'format': 'bestaudio/best',
     'noplaylist': True
 }
 
@@ -32,6 +32,7 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.queue = []
+        self.stop_adding_songs = False
         super().__init__()
 
     @commands.hybrid_command(aliases=['fila'], description="Mostra a fila de músicas.")
@@ -46,13 +47,14 @@ class Music(commands.Cog):
                 await ctx.send(f'```Fila de músicas:\n{queue_list}```')
         else:
             embed = discord.Embed(
-                description="A fila está vazia!",
+                description="A fila de músicas está vazia. Adicione algumas músicas para ver a lista!",
                 color=discord.Color.blue()
             )
             await ctx.send(embed=embed)
 
     @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
     async def clear_queue(self, ctx:commands.Context):
+        self.stop_adding_songs = True
         self.queue.clear()
         embed = discord.Embed(
             description="A fila foi limpa!",
@@ -189,6 +191,11 @@ class Music(commands.Cog):
                     await ctx.send(embed=embed)
                     
                     for entry in playlist_info['entries']:
+                        if self.stop_adding_songs:
+                            self.stop_adding_songs = False
+                            self.queue.clear()
+                            break  # Interrompe o loop se o comando clear for executado
+
                         if entry is None:
                             continue  # Ignora entradas que não puderam ser processadas
 
@@ -256,7 +263,7 @@ class Music(commands.Cog):
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
-                    description="A fila está vazia!",
+                    description="A fila de músicas terminou. Adicione mais músicas para continuar ouvindo!",
                     color=discord.Color.blue()
                 )
                 await ctx.send(embed=embed)
@@ -281,7 +288,7 @@ class Music(commands.Cog):
     async def random(self, ctx: commands.Context):
         if not self.queue:
             embed = discord.Embed(
-                description="A fila está vazia!",
+                description="Não há músicas na fila para colocar no aleatório. Adicione algumas músicas primeiro!",
                 color=discord.Color.red()
             )
             await ctx.send(embed=embed)
