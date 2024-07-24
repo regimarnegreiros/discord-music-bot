@@ -151,7 +151,7 @@ class Music(commands.Cog):
 
     def is_youtube_url(self, url):
         youtube_regex = re.compile(
-            r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$'
+            r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]v=.*$'
         )
         return youtube_regex.match(url) is not None
     
@@ -159,7 +159,7 @@ class Music(commands.Cog):
         playlist_regex = re.compile(
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]list=.+$'
         )
-        return playlist_regex.match(url) is not None
+        return playlist_regex.match(url) is not None and 'v=' not in url
 
     # Função assíncrona que extrai informações da playlist
     async def extract_playlist_info(self, url):
