@@ -136,14 +136,43 @@ class Music(commands.Cog):
             await ctx.send(embed=embed)
         
     @commands.hybrid_command(aliases=['pular', 'next'], description="Pula para a próxima música na fila.")
-    async def skip(self, ctx:commands.Context):
-        if ctx.voice_client and ctx.voice_client.is_playing():
+    async def skip(self, ctx: commands.Context, amount: int = 1):
+        if len(self.queue) == 0:
+            # Se não há músicas na fila
             ctx.voice_client.stop()
             if ctx.interaction:
                 embed = discord.Embed(
-                    description="Pulando música!",
-                    color=discord.Color.blue()
+                    description="Não há músicas na fila para pular.",
+                    color=discord.Color.red()
                 )
+                await ctx.send(embed=embed)
+            else:
+                await ctx.message.add_reaction('⏭️')
+            return
+        
+        if amount < 1 or amount > len(self.queue):
+            embed = discord.Embed(
+                description="Por favor, insira um valor válido para pular músicas.",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed)
+            return
+
+        if ctx.voice_client and ctx.voice_client.is_playing():
+            ctx.voice_client.stop()
+            # Pula a quantidade especificada de músicas
+            self.queue = self.queue[amount:]
+            if ctx.interaction:
+                if amount == 1:
+                    embed = discord.Embed(
+                        description=f"Pulando música!",
+                        color=discord.Color.blue()
+                    )
+                else:
+                    embed = discord.Embed(
+                        description=f"Pulei {amount} músicas!",
+                        color=discord.Color.blue()
+                    )
                 message = await ctx.send(embed=embed)
                 await message.add_reaction('⏭️')
             else:
