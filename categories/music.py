@@ -36,14 +36,14 @@ class Music(commands.Cog):
         super().__init__()
 
     @commands.hybrid_command(aliases=['fila'], description="Mostra a fila de músicas.")
-    async def queue(self, ctx):
+    async def queue(self, ctx: commands.Context):
         if self.queue:
             if len(self.queue) > 20:
-                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title) in enumerate(self.queue[:20])])
+                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue[:20])])
                 remaining_songs = len(self.queue) - 20
                 await ctx.send(f'```Fila de músicas:\n{queue_list}\n...e mais {remaining_songs} músicas na fila.```')
             else:
-                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title) in enumerate(self.queue)])
+                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue)])
                 await ctx.send(f'```Fila de músicas:\n{queue_list}```')
         else:
             embed = discord.Embed(
@@ -232,7 +232,8 @@ class Music(commands.Cog):
                             song_info = await self.extract_playlist_info(entry['url'])
                             url = song_info['url']
                             title = song_info['title']
-                            self.queue.append((url, title))
+                            webpage_url = song_info['webpage_url']
+                            self.queue.append((url, title, webpage_url, ctx.author.display_name, ctx.author.avatar.url))
                             print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
                             
                             if ctx.voice_client and ctx.voice_client.is_connected() and not ctx.voice_client.is_playing():
@@ -246,7 +247,8 @@ class Music(commands.Cog):
                     info = await asyncio.to_thread(ydl.extract_info, search, download=False)
                     url = info['url']
                     title = info['title']
-                    self.queue.append((url, title))
+                    webpage_url = info['webpage_url']
+                    self.queue.append((url, title, webpage_url, ctx.author.display_name, ctx.author.avatar.url))
                     embed = discord.Embed(
                         description=f'Adicionado a fila: **{title}**',
                         color=discord.Color.blue()
@@ -267,7 +269,8 @@ class Music(commands.Cog):
                         info = info['entries'][0]
                     url = info['url']
                     title = info['title']
-                    self.queue.append((url, title))
+                    webpage_url = info['webpage_url']
+                    self.queue.append((url, title, webpage_url, ctx.author.display_name, ctx.author.avatar.url))
                     embed = discord.Embed(
                         description=f'Adicionado a fila: **{title}**',
                         color=discord.Color.blue()
@@ -281,14 +284,15 @@ class Music(commands.Cog):
     async def play_next(self, ctx:commands.Context):
         if ctx.voice_client and ctx.voice_client.is_connected():
             if self.queue:
-                url, title = self.queue.pop(0)
+                url, title, webpage_url, display_name, avatar_url = self.queue.pop(0)
                 source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
                 ctx.voice_client.play(source, after=lambda _: self.bot.loop.create_task(self.play_next(ctx)))
                 embed = discord.Embed(
                     title="Tocando agora",
-                    description=f'{title}',
+                    description=f'[{title}]({webpage_url})',
                     color= discord.Color.blue()
                 )
+                embed.set_footer(text=f"Adicionado por {display_name}", icon_url=avatar_url)
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
