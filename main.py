@@ -3,11 +3,13 @@ from discord.ext import commands
 from discord import app_commands
 import os
 import asyncio
-
-from BOT_TOKEN import token
+from dotenv import load_dotenv
 from config import COLOR
 
+
 ## Configuração do bot:
+load_dotenv()
+TOKEN = os.getenv('TOKEN')
 permissions = discord.Intents.default()
 permissions.message_content = True
 permissions.members = True
@@ -103,12 +105,12 @@ async def on_ready():
     await bot.tree.sync()
     await bot.change_presence(
         status=discord.Status.do_not_disturb, 
-        activity=discord.Activity(type=discord.ActivityType.watching, name="dogs")
+        activity=discord.Activity(type=discord.ActivityType.listening, name="música")
     )
     print(f'Conectado como {bot.user} (ID: {bot.user.id})')
 
 
 async def main():
-    await bot.start(token)
+    await bot.start(TOKEN)
 
 asyncio.run(main())

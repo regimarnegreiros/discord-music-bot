@@ -7,6 +7,7 @@ Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord
 ### Pacotes Python
 - `discord.py`: Um wrapper Python para a API do Discord.
 - `yt_dlp`: Uma biblioteca de download do YouTube que fornece capacidades de extração para vídeos e playlists do YouTube.
+- `python-dotenv`: É uma biblioteca que facilita o uso de variáveis de ambiente em um projeto Python.
 
 ### Dependências Externas
 - `ffmpeg`: Um framework multimídia necessário para streaming de áudio.
