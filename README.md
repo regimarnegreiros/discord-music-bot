@@ -1,6 +1,3 @@
-
----
-
 # Bot de Música para Discord
 
 Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord.py` e `yt_dlp`. O bot foi desenvolvido para tocar músicas do YouTube, gerenciar filas de músicas e lidar com atualizações de estado de voz em canais do Discord. Ele suporta comandos para tocar músicas, pular faixas, visualizar e limpar a fila, e entrar/sair de canais de voz.
@@ -58,5 +55,3 @@ Execute o bot usando o seguinte comando:
 ```sh
 python main.py
 ```
-
----
