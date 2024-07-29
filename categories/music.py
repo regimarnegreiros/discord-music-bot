@@ -50,11 +50,10 @@ class Music(commands.Cog):
                 queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue)])
                 await ctx.send(f'```Fila de músicas:\n{queue_list}```')
         else:
-            embed = discord.Embed(
-                description="A fila de músicas está vazia. Adicione algumas músicas para ver a lista!",
-                color=discord.Color.blue()
+            await self.send_embed(
+                ctx, "A fila de músicas está vazia. Adicione algumas músicas para ver a lista!",
+                discord.Color.blue()
             )
-            await ctx.send(embed=embed)
 
     @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
     async def clear_queue(self, ctx:commands.Context):
@@ -63,38 +62,32 @@ class Music(commands.Cog):
         await self.send_embed(ctx, "A fila foi limpa!", discord.Color.blue())
 
     @commands.hybrid_command(aliases=['entrar', 'connect'], description="Faz o bot entrar no canal de voz.")
-    async def join(self, ctx:commands.Context):
-        if ctx.author.voice:
-            channel = ctx.author.voice.channel
-            if ctx.voice_client:
-                if ctx.voice_client.channel == channel:
-                    # O bot já está conectado ao canal de voz do usuário
-                    if ctx.interaction:
-                        await self.send_embed(ctx, "Já estou conectado a este canal de voz!", discord.Color.green())
-                    else:
-                        await ctx.message.add_reaction('✅')
-                else:
-                    # O bot está conectado a outro canal, desconectar e conectar-se ao novo canal
-                    await ctx.voice_client.move_to(channel)
-                    if ctx.interaction:
-                        message = await self.send_embed(ctx, "Conectado ao canal de voz!", discord.Color.green())
-                        await message.add_reaction('✅')
-                    else:
-                        await ctx.message.add_reaction('✅')
-            else:
-                # O bot não está conectado a nenhum canal
-                await channel.connect(timeout=30.0, reconnect=True)
-                if ctx.interaction:
-                    message = await self.send_embed(ctx, "Conectado ao canal de voz!", discord.Color.green())
-                    await message.add_reaction('✅')
-                else:
-                    await ctx.message.add_reaction('✅')
-                
-                if not ctx.voice_client.is_playing() and self.queue:
-                    await self.play_next(ctx) # Volta a tocar caso tenha músicas na fila
-
-        else:
+    async def join(self, ctx: commands.Context):
+        if not ctx.author.voice:
             await self.send_embed(ctx, "Você precisa estar em um canal de voz para usar este comando!", discord.Color.red())
+            return
+
+        channel = ctx.author.voice.channel
+        message = None
+        
+        if ctx.voice_client:
+            if ctx.voice_client.channel == channel:
+                msg_text = "Já estou conectado a este canal de voz!"
+            else:
+                await ctx.voice_client.move_to(channel)
+                msg_text = "Conectado ao canal de voz!"
+        else:
+            await channel.connect(timeout=30.0, reconnect=True)
+            msg_text = "Conectado ao canal de voz!"
+            
+        if not ctx.voice_client.is_playing() and self.queue:
+            await self.play_next(ctx) # Volta a tocar caso tenha músicas na fila
+
+        if ctx.interaction:
+            message = await self.send_embed(ctx, msg_text, discord.Color.green())
+            await message.add_reaction('✅')
+        else:
+            await ctx.message.add_reaction('✅')
 
     @commands.hybrid_command(aliases=['sair', 'disconnect'], description="Faz o bot sair do canal de voz.")
     async def exit(self, ctx:commands.Context):
