@@ -41,19 +41,20 @@ class Music(commands.Cog):
 
     @commands.hybrid_command(aliases=['fila'], description="Mostra a fila de músicas.")
     async def queue(self, ctx: commands.Context):
-        if self.queue:
-            if len(self.queue) > 20:
-                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue[:20])])
-                remaining_songs = len(self.queue) - 20
-                await ctx.send(f'```Fila de músicas:\n{queue_list}\n...e mais {remaining_songs} músicas na fila.```')
-            else:
-                queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue)])
-                await ctx.send(f'```Fila de músicas:\n{queue_list}```')
-        else:
+        if not self.queue:
             await self.send_embed(
                 ctx, "A fila de músicas está vazia. Adicione algumas músicas para ver a lista!",
                 discord.Color.blue()
             )
+            return
+        
+        if len(self.queue) > 20:
+            queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue[:20])])
+            remaining_songs = len(self.queue) - 20
+            await ctx.send(f'```Fila de músicas:\n{queue_list}\n...e mais {remaining_songs} músicas na fila.```')
+        else:
+            queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue)])
+            await ctx.send(f'```Fila de músicas:\n{queue_list}```')
 
     @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
     async def clear_queue(self, ctx: commands.Context):
