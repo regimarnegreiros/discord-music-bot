@@ -6,27 +6,7 @@ import asyncio
 import re
 import random
 
-from config import COLOR
-
-FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -timeout 3000000 -nostdin',
-    'options': '-vn', 'executable': 'C:/ffmpeg/ffmpeg.exe'
-}
-
-YDL_OPTIONS = {
-    'quiet': True,
-    'ignoreerrors': True,
-    'format': 'bestaudio/best',
-    'noplaylist': True
-}
-
-YDL_OPTIONS_FLAT = {
-    'extract_flat': 'in_playlist',
-    'quiet': True,
-    'ignoreerrors': True,
-    'format': 'bestaudio/best',
-    'noplaylist': True
-}
+from config import COLOR, FFMPEG_OPTIONS, YDL_OPTIONS, YDL_OPTIONS_FLAT
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -48,13 +28,12 @@ class Music(commands.Cog):
             )
             return
         
-        if len(self.queue) > 20:
-            queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue[:20])])
-            remaining_songs = len(self.queue) - 20
-            await ctx.send(f'```Fila de músicas:\n{queue_list}\n...e mais {remaining_songs} músicas na fila.```')
-        else:
-            queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue)])
-            await ctx.send(f'```Fila de músicas:\n{queue_list}```')
+        queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue[:20])])
+        remaining_songs = len(self.queue) - 20
+        message_content = f'```{queue_list}```'
+        if remaining_songs > 0:
+            message_content += f'```\n...e mais {remaining_songs} músicas na fila.```'
+        await ctx.send(message_content)
 
     @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
     async def clear_queue(self, ctx: commands.Context):
@@ -180,7 +159,7 @@ class Music(commands.Cog):
                             continue  # Ignora entradas que não puderam ser processadas
 
                         try:
-                            song_info = await self.extract_playlist_info(entry['url'])
+                            song_info = await asyncio.to_thread(ydl.extract_info, entry['url'], download=False)
                             url = song_info['url']
                             title = song_info['title']
                             webpage_url = song_info['webpage_url']
