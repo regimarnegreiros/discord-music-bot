@@ -56,7 +56,7 @@ class Music(commands.Cog):
             )
 
     @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
-    async def clear_queue(self, ctx:commands.Context):
+    async def clear_queue(self, ctx: commands.Context):
         self.stop_adding_songs = True
         self.queue.clear()
         await self.send_embed(ctx, "A fila foi limpa!", discord.Color.blue())
@@ -90,19 +90,23 @@ class Music(commands.Cog):
             await ctx.message.add_reaction('✅')
 
     @commands.hybrid_command(aliases=['sair', 'disconnect'], description="Faz o bot sair do canal de voz.")
-    async def exit(self, ctx:commands.Context):
+    async def exit(self, ctx: commands.Context):
         voice_client = ctx.guild.voice_client
-        if voice_client:
-            if voice_client.is_playing():
-                voice_client.stop()
-            await voice_client.disconnect()
-            if ctx.interaction:
-                message = await self.send_embed(ctx, "Saindo do canal de voz!", discord.Color.green())
-                await message.add_reaction('👋')
-            else:
-                await ctx.message.add_reaction('👋')
-        else:
+
+        if not voice_client:
             await self.send_embed(ctx, "O bot não está atualmente em um canal de voz!", discord.Color.red())
+            return
+
+        if voice_client.is_playing():
+            voice_client.stop()
+        
+        await voice_client.disconnect()
+
+        if ctx.interaction:
+            message = await self.send_embed(ctx, "Saindo do canal de voz!", discord.Color.green())
+            await message.add_reaction('👋')
+        else:
+            await ctx.message.add_reaction('👋')
         
     @commands.hybrid_command(aliases=['pular', 'next'], description="Pula para a próxima música na fila.")
     async def skip(self, ctx: commands.Context, amount: int = 0):
@@ -149,7 +153,7 @@ class Music(commands.Cog):
         return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
 
     @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.")
-    async def play(self, ctx:commands.Context, *, search):
+    async def play(self, ctx: commands.Context, *, search):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
         if not voice_channel:
             await self.send_embed(ctx, "Você precisa estar em um canal de voz para usar este comando!", discord.Color.red())
@@ -217,7 +221,7 @@ class Music(commands.Cog):
         if not ctx.voice_client.is_playing():
             await self.play_next(ctx)
 
-    async def play_next(self, ctx:commands.Context):
+    async def play_next(self, ctx: commands.Context):
         if ctx.voice_client and ctx.voice_client.is_connected():
             if self.queue:
                 url, title, webpage_url, display_name, avatar_url = self.queue.pop(0)
