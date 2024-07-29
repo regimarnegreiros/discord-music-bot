@@ -110,22 +110,21 @@ class Music(commands.Cog):
         
     @commands.hybrid_command(aliases=['pular', 'next'], description="Pula para a próxima música na fila.")
     async def skip(self, ctx: commands.Context, amount: int = 0):
+        if amount < 0 or amount > len(self.queue):
+            await self.send_embed(ctx, "Por favor, insira um valor válido para pular músicas.", discord.Color.red())
+            return
+
         if len(self.queue) == 0:
             # Se não há músicas na fila
-            ctx.voice_client.stop()
             if ctx.interaction:
                 await self.send_embed(ctx, "Não há músicas na fila para pular.", discord.Color.red())
             else:
                 await ctx.message.add_reaction('⏭️')
             return
         
-        if amount < 0 or amount > len(self.queue):
-            await self.send_embed(ctx, "Por favor, insira um valor válido para pular músicas.", discord.Color.red())
-            return
-
         if ctx.voice_client and ctx.voice_client.is_playing():
-            ctx.voice_client.stop()
             # Pula a quantidade especificada de músicas
+            ctx.voice_client.stop()
             self.queue = self.queue[amount:]
             if ctx.interaction:
                 description = f"Pulando música!" if amount == 0 else f"Pulei {amount} músicas!"
