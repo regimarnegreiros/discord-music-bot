@@ -188,14 +188,21 @@ class Music(commands.Cog):
                 
                 else:
                     info = await asyncio.to_thread(ydl.extract_info, f"ytsearch:{search}", download=False)
-                    if 'entries' in info:
+                    if 'entries' in info and len(info['entries']) > 0:
+                        if info['entries'][0].get('is_live'):
+                            info = await asyncio.to_thread(ydl.extract_info, f"ytsearch:{search} -live", download=False)
+
+                    if 'entries' in info and len(info['entries']) > 0:
                         info = info['entries'][0]
-                    url = info['url']
-                    title = info['title']
-                    webpage_url = info['webpage_url']
-                    self.queue.append((url, title, webpage_url, ctx.author.display_name, ctx.author.avatar.url))
-                    await self.send_embed(ctx, f'Adicionado a fila: **{title}**', discord.Color.blue())
-                    print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
+                        url = info['url']
+                        title = info['title']
+                        webpage_url = info['webpage_url']
+                        self.queue.append((url, title, webpage_url, ctx.author.display_name, ctx.author.avatar.url))
+                        await self.send_embed(ctx, f'Adicionado a fila: **{title}**', discord.Color.blue())
+                        print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{title}')
+                    else:
+                        await self.send_embed(ctx, "Nenhum resultado encontrado. Tente novamente.", discord.Color.red())
+                        return
 
         if not ctx.voice_client.is_playing():
             await self.play_next(ctx)
