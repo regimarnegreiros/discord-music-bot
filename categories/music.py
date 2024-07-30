@@ -96,6 +96,8 @@ class Music(commands.Cog):
 
         if len(self.queue) == 0:
             # Se não há músicas na fila
+            ctx.voice_client.stop()
+            self.queue = self.queue[amount:]
             if ctx.interaction:
                 await self.send_embed(ctx, "Não há músicas na fila para pular.", discord.Color.red())
             else:
