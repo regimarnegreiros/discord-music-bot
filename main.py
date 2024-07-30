@@ -54,27 +54,36 @@ def create_command_field(bot, command_name, custom_title=None):
 @bot.hybrid_command(aliases=['ajuda', 'h'], description="Exibe os comandos existentes.")
 async def help(ctx: commands.Context):
     embed = discord.Embed(
-        title="Comandos de Música",
+        title="Lista de Comandos",
         color=discord.Color.blue()
     )
 
-    commands_in_order = [
-        ('play', 'play [link/nome da música]'),
-        ('skip', 'skip [quantidade (opcional)]'),
-        ('queue', None),
-        ('remove', 'remove [index]'),
-        ('move', 'move [do_index] [para_index]'),
-        ('clear', None),
-        ('random', None),
-        ('join', None),
-        ('exit', None)
-    ]
-    
-    for command_name, custom_title in commands_in_order:
-        field = create_command_field(bot, command_name, custom_title)
-        if field:
-            embed.add_field(**field)
-    
+    # Tópicos de comandos
+    topics = {
+        "🎵 Comandos de Música": [
+            ('play', 'play [link/nome da música]'),
+            ('skip', 'skip [quantidade (opcional)]')
+        ],
+        "🎶 Comandos de fila": [
+            ('queue', None),
+            ('remove', 'remove [index]'),
+            ('move', 'move [do_index] [para_index]'),
+            ('clear', None),
+            ('random', None)
+        ],
+        "🔗 Comandos de Conexão": [
+            ('join', None),
+            ('exit', None)
+        ]
+    }
+
+    for topic, commands_in_order in topics.items():
+        embed.add_field(name="\u200b", value=f"**{topic}**", inline=False)
+        for command_name, custom_title in commands_in_order:
+            field = create_command_field(bot, command_name, custom_title)
+            if field:
+                embed.add_field(**field)
+
     await ctx.send(embed=embed)
 
 @bot.event
