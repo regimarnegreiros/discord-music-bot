@@ -241,6 +241,22 @@ class Music(commands.Cog):
             random.shuffle(self.queue)
             await self.send_embed(ctx, "A fila de músicas foi embaralhada!", discord.Color.blue())
 
+    @commands.hybrid_command(aliases=['mover'], description="Move uma música na fila de uma posição para outra.")
+    async def move(self, ctx: commands.Context, from_index: int, to_index: int):
+        if from_index < 1 or from_index > len(self.queue) or to_index < 1 or to_index > len(self.queue):
+            await self.send_embed(
+                ctx, "Índice inválido. Por favor, forneça índices válidos.",
+                discord.Color.red()
+            )
+        else:
+            song = self.queue.pop(from_index - 1)
+            self.queue.insert(to_index - 1, song)
+            await self.send_embed(
+                ctx, f'Movido **{song[1]}** da posição {from_index} para a posição {to_index}.',
+                discord.Color.blue()
+            )
+
+
     ## Eventos
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):

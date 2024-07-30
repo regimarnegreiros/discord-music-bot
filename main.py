@@ -63,6 +63,7 @@ async def help(ctx: commands.Context):
         ('skip', 'skip [quantidade (opcional)]'),
         ('queue', None),
         ('remove', 'remove [index]'),
+        ('move', 'move [do_index] [para_index]'),
         ('clear', None),
         ('random', None),
         ('join', None),
