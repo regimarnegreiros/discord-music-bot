@@ -14,7 +14,8 @@ permissions = discord.Intents.default()
 permissions.message_content = True
 permissions.members = True
 permissions.voice_states = True
-bot = commands.Bot(command_prefix="-", intents=permissions)
+PREFIX = "-"
+bot = commands.Bot(command_prefix=PREFIX, intents=permissions)
 
 async def load_cogs():
     for arquivo in os.listdir('categories'):
@@ -24,59 +25,55 @@ async def load_cogs():
 
 ## Comandos gerais:
 @bot.hybrid_command(description="Responde o usuário com pong.")
-async def ping(ctx:commands.Context):
+async def ping(ctx: commands.Context):
     await ctx.send("Pong 🏓")
 
 # Remover o comando de ajuda padrão:
 bot.remove_command('help')
 
-@bot.hybrid_command(aliases=['ajuda', 'h'], description="Exibe os comandos exitentes.")
-async def help(ctx:commands.Context):
+def create_command_field(bot, command_name, custom_title=None):
+    command = bot.get_command(command_name)
+    if not command:
+        return None
+
+    aliases = command.aliases
+    description = command.description or "Nenhuma descrição fornecida."
+    aliases_str = ", ".join([f"{PREFIX}{alias}" for alias in aliases])
+    if custom_title:
+        field_name = PREFIX + custom_title
+    else:
+        field_name = f"{PREFIX}{command.name}"
+    
+    if aliases:
+        field_value = f"{description}\nComandos alternativos: {aliases_str}"
+    else:
+        field_value = description
+    
+    return {"name": field_name, "value": field_value, "inline": False}
+
+@bot.hybrid_command(aliases=['ajuda', 'h'], description="Exibe os comandos existentes.")
+async def help(ctx: commands.Context):
     embed = discord.Embed(
         title="Comandos de Música",
         color=discord.Color.blue()
     )
 
-    embed.add_field(
-        name="-play [link/nome da música]",
-        value="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.\nComando alternativo: -p",
-        inline=False
-    )
-    embed.add_field(
-        name="-skip",
-        value="Pula para a próxima música na fila. \nComandos alternativos: -pular, -next",
-        inline=False
-    )
-    embed.add_field(
-        name="-queue",
-        value="Mostra a fila de músicas.\nComando alternativo: -fila",
-        inline=False
-    )
-    embed.add_field(
-        name="-remove [index]",
-        value="Remove uma música da fila pelo índice.\nComando alternativo: -remover",
-        inline=False
-    )
-    embed.add_field(
-        name="-clear",
-        value="Limpa a fila de músicas.\nComandos alternativos: -limpar, -clear_queue",
-        inline=False
-    )
-    embed.add_field(
-        name="-random",
-        value="Embaralha a fila de músicas.\nComandos alternativos: -embaralhar, -aleatorizar"
-    )
-    embed.add_field(
-        name="-join",
-        value="Faz o bot entrar no canal de voz.\nComandos alternativos: -entrar, -connect",
-        inline=False
-    )
-    embed.add_field(
-        name="-exit",
-        value="Faz o bot sair do canal de voz.\nComandos alternativos: -sair, -disconnect",
-        inline=False
-    )
-
+    commands_in_order = [
+        ('play', 'play [link/nome da música]'),
+        ('skip', 'skip [quantidade (opcional)]'),
+        ('queue', None),
+        ('remove', 'remove [index]'),
+        ('clear', None),
+        ('random', None),
+        ('join', None),
+        ('exit', None)
+    ]
+    
+    for command_name, custom_title in commands_in_order:
+        field = create_command_field(bot, command_name, custom_title)
+        if field:
+            embed.add_field(**field)
+    
     await ctx.send(embed=embed)
 
 @bot.event
