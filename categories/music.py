@@ -143,36 +143,45 @@ class Music(commands.Cog):
             print(f'{COLOR["RED"]}ERROR: {COLOR["RESET"]}{e}')
             return None
 
-    @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.")
-    async def play(self, ctx: commands.Context, *, search):
+    async def connect_to_play(self, ctx: commands.Context):
         voice_channel = ctx.author.voice.channel if ctx.author.voice else None
         if not voice_channel:
             await self.send_embed(ctx, "Você precisa estar em um canal de voz para usar este comando!", discord.Color.red())
-            return
+            return False
         if not ctx.voice_client:
             await voice_channel.connect()
-            print(f"{COLOR["BOLD_WHITE"]}Conectado ao canal de voz: {COLOR["RESET"]}{voice_channel.name}")
+            print(f"{COLOR['BOLD_WHITE']}Conectado ao canal de voz: {COLOR['RESET']}{voice_channel.name}")
+        return True
+
+    async def add_playlist_to_queue(self, ctx, playlist_info):
+        await self.send_embed(
+            ctx, f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.', discord.Color.blue()
+        )
+
+        for entry in playlist_info['entries']:
+            if self.stop_adding_songs:
+                self.stop_adding_songs = False
+                self.queue.clear()
+                break  # Interrompe o loop se o comando clear for executado
+
+            if entry is None:
+                continue  # Ignora entradas que não puderam ser processadas
+
+            with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+                info = await self.extract_and_add_to_queue(ydl, entry['url'], ctx.author)
+                if info and ctx.voice_client and ctx.voice_client.is_connected() and not ctx.voice_client.is_playing():
+                    await self.play_next(ctx)
+
+    @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.")
+    async def play(self, ctx: commands.Context, *, search):
+        if not await self.connect_to_play(ctx):
+            return
 
         async with ctx.typing():
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
                 if self.is_youtube_playlist_url(search):
                     playlist_info = await self.extract_playlist_info(search)
-                    await self.send_embed(
-                        ctx, f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.', discord.Color.blue()
-                    )
-                    
-                    for entry in playlist_info['entries']:
-                        if self.stop_adding_songs:
-                            self.stop_adding_songs = False
-                            self.queue.clear()
-                            break  # Interrompe o loop se o comando clear for executado
-
-                        if entry is None:
-                            continue  # Ignora entradas que não puderam ser processadas
-
-                        info = await self.extract_and_add_to_queue(ydl, entry['url'], ctx.author)
-                        if info and ctx.voice_client and ctx.voice_client.is_connected() and not ctx.voice_client.is_playing():
-                            await self.play_next(ctx)
+                    await self.add_playlist_to_queue(ctx, playlist_info)
 
                 elif self.is_youtube_url(search):
                     info = await self.extract_and_add_to_queue(ydl, search, ctx.author)
