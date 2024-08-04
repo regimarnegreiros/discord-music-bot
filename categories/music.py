@@ -11,25 +11,34 @@ from config import COLOR, FFMPEG_OPTIONS, YDL_OPTIONS, YDL_OPTIONS_FLAT
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.queue = []
-        self.stop_adding_songs = False
+        self.queues = {}
+        self.stop_adding_songs = {}
         super().__init__()
 
     async def send_embed(self, ctx, description, color):
         embed = discord.Embed(description=description, color=color)
         return await ctx.send(embed=embed)
 
+    def get_queue(self, guild_id):
+        if guild_id not in self.queues:
+            self.queues[guild_id] = []
+        return self.queues[guild_id]
+
+    def set_stop_adding_songs(self, guild_id, value):
+        self.stop_adding_songs[guild_id] = value
+
     @commands.hybrid_command(aliases=['fila'], description="Mostra a fila de músicas.")
     async def queue(self, ctx: commands.Context):
-        if not self.queue:
+        queue = self.get_queue(ctx.guild.id)
+        if not queue:
             await self.send_embed(
                 ctx, "A fila de músicas está vazia. Adicione algumas músicas para ver a lista!",
                 discord.Color.blue()
             )
             return
         
-        queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(self.queue[:20])])
-        remaining_songs = len(self.queue) - 20
+        queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(queue[:20])])
+        remaining_songs = len(queue) - 20
         message_content = f'```{queue_list}```'
         if remaining_songs > 0:
             message_content += f'```\n...e mais {remaining_songs} músicas na fila.```'
@@ -37,8 +46,8 @@ class Music(commands.Cog):
 
     @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
     async def clear_queue(self, ctx: commands.Context):
-        self.stop_adding_songs = True
-        self.queue.clear()
+        self.set_stop_adding_songs(ctx.guild.id, True)
+        self.get_queue(ctx.guild.id).clear()
         await self.send_embed(ctx, "A fila foi limpa!", discord.Color.blue())
 
     @commands.hybrid_command(aliases=['entrar', 'connect'], description="Faz o bot entrar no canal de voz.")
@@ -60,7 +69,7 @@ class Music(commands.Cog):
             await channel.connect(timeout=30.0, reconnect=True)
             msg_text = "Conectado ao canal de voz!"
             
-        if not ctx.voice_client.is_playing() and self.queue:
+        if not ctx.voice_client.is_playing() and self.get_queue(ctx.guild.id):
             await self.play_next(ctx) # Volta a tocar caso tenha músicas na fila
 
         if ctx.interaction:
@@ -90,14 +99,15 @@ class Music(commands.Cog):
         
     @commands.hybrid_command(aliases=['pular', 'next'], description="Pula para a próxima música na fila.")
     async def skip(self, ctx: commands.Context, amount: int = 0):
-        if amount < 0 or amount > len(self.queue):
+        queue = self.get_queue(ctx.guild.id)
+        if amount < 0 or amount > len(queue):
             await self.send_embed(ctx, "Por favor, insira um valor válido para pular músicas.", discord.Color.red())
             return
 
-        if len(self.queue) == 0:
+        if len(queue) == 0:
             # Se não há músicas na fila
             ctx.voice_client.stop()
-            self.queue = self.queue[amount:]
+            self.get_queue(ctx.guild.id).clear()
             if ctx.interaction:
                 await self.send_embed(ctx, "Não há músicas na fila para pular.", discord.Color.red())
             else:
@@ -107,7 +117,7 @@ class Music(commands.Cog):
         if ctx.voice_client and ctx.voice_client.is_playing():
             # Pula a quantidade especificada de músicas
             ctx.voice_client.stop()
-            self.queue = self.queue[amount:]
+            self.queues[ctx.guild.id] = self.queues[ctx.guild.id][amount:]
             if ctx.interaction:
                 description = f"Pulando música!" if amount == 0 else f"Pulei {amount} músicas!"
                 message = await self.send_embed(ctx, description, discord.Color.blue())
@@ -133,10 +143,10 @@ class Music(commands.Cog):
         # Executa a função síncrona em um thread pool
         return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
 
-    async def extract_and_add_to_queue(self, ydl, url, author):
+    async def extract_and_add_to_queue(self, ydl, url, author, guild_id):
         try:
             info = await asyncio.to_thread(ydl.extract_info, url, download=False)
-            self.queue.append((info['url'], info['title'], info['webpage_url'], author.display_name, author.avatar.url))
+            self.get_queue(guild_id).append((info['url'], info['title'], info['webpage_url'], author.display_name, author.avatar.url))
             print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{info["title"]}')
             return info
         except Exception as e:
@@ -154,21 +164,22 @@ class Music(commands.Cog):
         return True
 
     async def add_playlist_to_queue(self, ctx, playlist_info):
+        guild_id = ctx.guild.id
         await self.send_embed(
             ctx, f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.', discord.Color.blue()
         )
 
         for entry in playlist_info['entries']:
-            if self.stop_adding_songs:
-                self.stop_adding_songs = False
-                self.queue.clear()
+            if self.stop_adding_songs.get(guild_id, False):
+                self.set_stop_adding_songs(guild_id, False)
+                self.get_queue(guild_id).clear()
                 break  # Interrompe o loop se o comando clear for executado
 
             if entry is None:
                 continue  # Ignora entradas que não puderam ser processadas
 
             with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-                info = await self.extract_and_add_to_queue(ydl, entry['url'], ctx.author)
+                info = await self.extract_and_add_to_queue(ydl, entry['url'], ctx.author, guild_id)
                 if info and ctx.voice_client and ctx.voice_client.is_connected() and not ctx.voice_client.is_playing():
                     await self.play_next(ctx)
 
@@ -184,7 +195,7 @@ class Music(commands.Cog):
                     await self.add_playlist_to_queue(ctx, playlist_info)
 
                 elif self.is_youtube_url(search):
-                    info = await self.extract_and_add_to_queue(ydl, search, ctx.author)
+                    info = await self.extract_and_add_to_queue(ydl, search, ctx.author, ctx.guild.id)
                     if info:
                         await self.send_embed(ctx, f'Adicionado a fila: **{info["title"]}**', discord.Color.blue())
 
@@ -200,7 +211,7 @@ class Music(commands.Cog):
 
                     if 'entries' in info and len(info['entries']) > 0:
                         info = info['entries'][0]
-                        info = await self.extract_and_add_to_queue(ydl, info['webpage_url'], ctx.author)
+                        info = await self.extract_and_add_to_queue(ydl, info['webpage_url'], ctx.author, ctx.guild.id)
                         if info:
                             await self.send_embed(ctx, f'Adicionado a fila: **{info["title"]}**', discord.Color.blue())
                     else:
@@ -211,9 +222,11 @@ class Music(commands.Cog):
             await self.play_next(ctx)
 
     async def play_next(self, ctx: commands.Context):
+        guild_id = ctx.guild.id
         if ctx.voice_client and ctx.voice_client.is_connected():
-            if self.queue:
-                url, title, webpage_url, display_name, avatar_url = self.queue.pop(0)
+            queue = self.get_queue(guild_id)
+            if queue:
+                url, title, webpage_url, display_name, avatar_url = queue.pop(0)
                 source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
                 ctx.voice_client.play(source, after=lambda _: self.bot.loop.create_task(self.play_next(ctx)))
                 embed = discord.Embed(
@@ -231,41 +244,43 @@ class Music(commands.Cog):
 
     @commands.hybrid_command(aliases=['remover'], description="Remove uma música da fila pelo índice.")
     async def remove(self, ctx: commands.Context, index: int):
-        if index < 1 or index > len(self.queue):
+        queue = self.get_queue(ctx.guild.id)
+        if index < 1 or index > len(queue):
             await self.send_embed(
                 ctx, "Índice inválido. Por favor, forneça um índice válido.",
                 discord.Color.red()
             )
         else:
-            removed_song = self.queue.pop(index - 1)
-            await self.send_embed(ctx, f'Removido da fila: **{removed_song[1]}**', discord.Color.blue)
+            removed_song = queue.pop(index - 1)
+            await self.send_embed(ctx, f'Removido da fila: **{removed_song[1]}**', discord.Color.blue())
 
     @commands.hybrid_command(aliases=['embaralhar', 'aleatorizar'], description="Embaralha a fila de músicas.")
     async def random(self, ctx: commands.Context):
-        if not self.queue:
+        queue = self.get_queue(ctx.guild.id)
+        if not queue:
             await self.send_embed(
                 ctx, "Não há músicas na fila para colocar no aleatório. Adicione algumas músicas primeiro!",
                 discord.Color.red()
             )
         else:
-            random.shuffle(self.queue)
+            random.shuffle(queue)
             await self.send_embed(ctx, "A fila de músicas foi embaralhada!", discord.Color.blue())
 
     @commands.hybrid_command(aliases=['mover'], description="Move uma música na fila de uma posição para outra.")
     async def move(self, ctx: commands.Context, from_index: int, to_index: int):
-        if from_index < 1 or from_index > len(self.queue) or to_index < 1 or to_index > len(self.queue):
+        queue = self.get_queue(ctx.guild.id)
+        if from_index < 1 or from_index > len(queue) or to_index < 1 or to_index > len(queue):
             await self.send_embed(
                 ctx, "Índice inválido. Por favor, forneça índices válidos.",
                 discord.Color.red()
             )
         else:
-            song = self.queue.pop(from_index - 1)
-            self.queue.insert(to_index - 1, song)
+            song = queue.pop(from_index - 1)
+            queue.insert(to_index - 1, song)
             await self.send_embed(
                 ctx, f'Movido **{song[1]}** da posição {from_index} para a posição {to_index}.',
                 discord.Color.blue()
             )
-
 
     ## Eventos
     @commands.Cog.listener()
@@ -280,7 +295,6 @@ class Music(commands.Cog):
                     bot_voice_state.stop()
                 
                 await bot_voice_state.disconnect()
-
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
