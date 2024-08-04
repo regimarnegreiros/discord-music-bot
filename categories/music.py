@@ -288,13 +288,18 @@ class Music(commands.Cog):
         bot_voice_state = member.guild.voice_client
 
         if bot_voice_state and before.channel == bot_voice_state.channel and after.channel != bot_voice_state.channel:
-            await asyncio.sleep(60)
-            # Verificar o número de membros após o delay
+            for _ in range(300):
+                await asyncio.sleep(1)
+                if len(bot_voice_state.channel.members) > 1:
+                    return
+            
             if len(bot_voice_state.channel.members) == 1:
                 if bot_voice_state.is_playing():
                     bot_voice_state.stop()
                 
                 await bot_voice_state.disconnect()
+                self.set_stop_adding_songs(member.guild.id, True)
+                self.get_queue(member.guild.id).clear()
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
