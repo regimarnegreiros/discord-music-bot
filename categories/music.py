@@ -13,6 +13,7 @@ class Music(commands.Cog):
         self.bot = bot
         self.queues = {}
         self.stop_adding_songs = {}
+        self.previous_now_playing_msg = None
         super().__init__()
 
     async def send_embed(self, ctx, description, color):
@@ -234,6 +235,13 @@ class Music(commands.Cog):
         guild_id = ctx.guild.id
         if ctx.voice_client and ctx.voice_client.is_connected():
             queue = self.get_queue(guild_id)
+
+            if self.previous_now_playing_msg is not None:
+                try:
+                    await self.previous_now_playing_msg.delete()
+                except Exception as e:
+                    print(f"Erro ao deletar mensagem: {e}")
+
             if queue:
                 url, title, webpage_url, display_name, avatar_url = queue.pop(0)
                 with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
@@ -248,8 +256,9 @@ class Music(commands.Cog):
                     color= discord.Color.blue()
                 )
                 embed.set_footer(text=f"Adicionado por {display_name}", icon_url=avatar_url)
-                await ctx.send(embed=embed)
+                self.previous_now_playing_msg = await ctx.send(embed=embed)
             else:
+                self.previous_now_playing_msg = None
                 await self.send_embed(
                     ctx, "A fila de músicas terminou. Adicione mais músicas para continuar ouvindo!",
                     discord.Color.blue()
