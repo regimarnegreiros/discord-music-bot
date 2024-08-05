@@ -11,7 +11,7 @@ YDL_OPTIONS = {
 }
 
 YDL_OPTIONS_FLAT = {
-    'extract_flat': 'in_playlist',
+    'extract_flat': True,
     'quiet': True,
     'ignoreerrors': True,
     'format': 'bestaudio/best',

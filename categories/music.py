@@ -178,10 +178,19 @@ class Music(commands.Cog):
             if entry is None:
                 continue  # Ignora entradas que não puderam ser processadas
 
-            with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-                info = await self.extract_and_add_to_queue(ydl, entry['url'], ctx.author, guild_id)
-                if info and ctx.voice_client and ctx.voice_client.is_connected() and not ctx.voice_client.is_playing():
-                    await self.play_next(ctx)
+            info = {
+                'url': entry['url'],
+                'title': entry['title'],
+                'webpage_url': entry['url'],
+                'author': ctx.author.display_name,
+                'avatar_url': ctx.author.avatar.url
+            }
+            self.get_queue(guild_id).append((info['url'], info['title'], info['webpage_url'], info['author'], info['avatar_url']))
+            print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{info["title"]}')
+
+        # Toca a próxima música se o bot não estiver tocando atualmente
+        if not ctx.voice_client.is_playing():
+            await self.play_next(ctx)
 
     @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.")
     async def play(self, ctx: commands.Context, *, search):
@@ -213,7 +222,7 @@ class Music(commands.Cog):
                         info = info['entries'][0]
                         info = await self.extract_and_add_to_queue(ydl, info['webpage_url'], ctx.author, ctx.guild.id)
                         if info:
-                            await self.send_embed(ctx, f'Adicionado a fila: **{info["title"]}**', discord.Color.blue())
+                            await self.send_embed(ctx, f'Adicionado à fila: **{info["title"]}**', discord.Color.blue())
                     else:
                         await self.send_embed(ctx, "Nenhum resultado encontrado. Tente novamente.", discord.Color.red())
                         return
@@ -227,7 +236,11 @@ class Music(commands.Cog):
             queue = self.get_queue(guild_id)
             if queue:
                 url, title, webpage_url, display_name, avatar_url = queue.pop(0)
-                source = await discord.FFmpegOpusAudio.from_probe(url, **FFMPEG_OPTIONS)
+                with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+                    info = await asyncio.to_thread(ydl.extract_info, url, download=False)
+                    if not info:
+                        return
+                source = discord.FFmpegPCMAudio(info['url'], **FFMPEG_OPTIONS)
                 ctx.voice_client.play(source, after=lambda _: self.bot.loop.create_task(self.play_next(ctx)))
                 embed = discord.Embed(
                     title="Tocando agora",
