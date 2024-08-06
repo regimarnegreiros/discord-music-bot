@@ -119,6 +119,16 @@ class Music(commands.Cog):
                 else:
                     await ctx.message.add_reaction('⏭️')
 
+    async def connect_to_play(self, ctx: commands.Context):
+        voice_channel = ctx.author.voice.channel if ctx.author.voice else None
+        if not voice_channel:
+            await self.send_embed(ctx, "Você precisa estar em um canal de voz para usar este comando!", discord.Color.red())
+            return False
+        if not ctx.voice_client:
+            await voice_channel.connect()
+            print(f"{COLOR['BOLD_WHITE']}Conectado ao canal de voz: {COLOR['RESET']}{voice_channel.name}")
+        return True
+
     def is_youtube_url(self, url):
         youtube_regex = re.compile(
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]v=.*$'
@@ -146,16 +156,6 @@ class Music(commands.Cog):
         except Exception as e:
             print(f'{COLOR["RED"]}ERROR: {COLOR["RESET"]}{e}')
             return None
-
-    async def connect_to_play(self, ctx: commands.Context):
-        voice_channel = ctx.author.voice.channel if ctx.author.voice else None
-        if not voice_channel:
-            await self.send_embed(ctx, "Você precisa estar em um canal de voz para usar este comando!", discord.Color.red())
-            return False
-        if not ctx.voice_client:
-            await voice_channel.connect()
-            print(f"{COLOR['BOLD_WHITE']}Conectado ao canal de voz: {COLOR['RESET']}{voice_channel.name}")
-        return True
 
     async def add_playlist_to_queue(self, ctx, playlist_info):
         guild_id = ctx.guild.id
