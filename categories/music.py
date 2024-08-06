@@ -12,7 +12,6 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.queues = {}
-        self.stop_adding_songs = {}
         self.previous_now_playing_msg = None
         super().__init__()
 
@@ -24,9 +23,6 @@ class Music(commands.Cog):
         if guild_id not in self.queues:
             self.queues[guild_id] = []
         return self.queues[guild_id]
-
-    def set_stop_adding_songs(self, guild_id, value):
-        self.stop_adding_songs[guild_id] = value
 
     @commands.hybrid_command(aliases=['fila'], description="Mostra a fila de músicas.")
     async def queue(self, ctx: commands.Context):
@@ -47,7 +43,6 @@ class Music(commands.Cog):
 
     @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
     async def clear_queue(self, ctx: commands.Context):
-        self.set_stop_adding_songs(ctx.guild.id, True)
         self.get_queue(ctx.guild.id).clear()
         await self.send_embed(ctx, "A fila foi limpa!", discord.Color.blue())
 
@@ -105,26 +100,24 @@ class Music(commands.Cog):
             await self.send_embed(ctx, "Por favor, insira um valor válido para pular músicas.", discord.Color.red())
             return
 
-        if len(queue) == 0:
-            # Se não há músicas na fila
-            ctx.voice_client.stop()
-            self.get_queue(ctx.guild.id).clear()
-            if ctx.interaction:
-                await self.send_embed(ctx, "Não há músicas na fila para pular.", discord.Color.red())
-            else:
-                await ctx.message.add_reaction('⏭️')
-            return
-        
         if ctx.voice_client and ctx.voice_client.is_playing():
-            # Pula a quantidade especificada de músicas
-            ctx.voice_client.stop()
-            self.queues[ctx.guild.id] = self.queues[ctx.guild.id][amount:]
-            if ctx.interaction:
-                description = f"Pulando música!" if amount == 0 else f"Pulei {amount} músicas!"
-                message = await self.send_embed(ctx, description, discord.Color.blue())
-                await message.add_reaction('⏭️')
+            if queue:
+                # Se há músicas na fila, pula a quantidade especificada de músicas
+                self.queues[ctx.guild.id] = self.queues[ctx.guild.id][amount:]
+                ctx.voice_client.stop()
+                if ctx.interaction:
+                    description = f"Pulando música!" if amount == 0 else f"Pulei {amount} músicas!"
+                    message = await self.send_embed(ctx, description, discord.Color.blue())
+                    await message.add_reaction('⏭️')
+                else:
+                    await ctx.message.add_reaction('⏭️')
             else:
-                await ctx.message.add_reaction('⏭️')
+                # Se a fila está vazia, apenas para a reprodução atual
+                ctx.voice_client.stop()
+                if ctx.interaction:
+                    await self.send_embed(ctx, "Não há músicas na fila para pular.", discord.Color.red())
+                else:
+                    await ctx.message.add_reaction('⏭️')
 
     def is_youtube_url(self, url):
         youtube_regex = re.compile(
@@ -171,11 +164,6 @@ class Music(commands.Cog):
         )
 
         for entry in playlist_info['entries']:
-            if self.stop_adding_songs.get(guild_id, False):
-                self.set_stop_adding_songs(guild_id, False)
-                self.get_queue(guild_id).clear()
-                break  # Interrompe o loop se o comando clear for executado
-
             if entry is None:
                 continue  # Ignora entradas que não puderam ser processadas
 
@@ -188,10 +176,6 @@ class Music(commands.Cog):
             }
             self.get_queue(guild_id).append((info['url'], info['title'], info['webpage_url'], info['author'], info['avatar_url']))
             print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{info["title"]}')
-
-        # Toca a próxima música se o bot não estiver tocando atualmente
-        if not ctx.voice_client.is_playing():
-            await self.play_next(ctx)
 
     @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.")
     async def play(self, ctx: commands.Context, *, search):
@@ -320,7 +304,6 @@ class Music(commands.Cog):
                     bot_voice_state.stop()
                 
                 await bot_voice_state.disconnect()
-                self.set_stop_adding_songs(member.guild.id, True)
                 self.get_queue(member.guild.id).clear()
 
 async def setup(bot):
