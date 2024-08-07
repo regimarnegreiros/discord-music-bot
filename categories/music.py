@@ -6,7 +6,7 @@ import asyncio
 import re
 import random
 
-from config import COLOR, FFMPEG_OPTIONS, YDL_OPTIONS, YDL_OPTIONS_FLAT
+from config import COLOR, FFMPEG_OPTIONS, YDL_OPTIONS, YDL_OPTIONS_FLAT, YDL_OPTIONS_NO_DOWNLOAD
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -141,41 +141,56 @@ class Music(commands.Cog):
         )
         return playlist_regex.match(url) is not None and 'v=' not in url
 
-    # Função assíncrona que extrai informações da playlist
-    async def extract_playlist_info(self, url):
+    # Função assíncrona que extrai informações das músicas
+    async def extract_info(self, url):
         loop = asyncio.get_running_loop()
-        # Executa a função síncrona em um thread pool
-        return await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
 
-    async def extract_and_add_to_queue(self, ydl, url, author, guild_id):
-        try:
-            info = await asyncio.to_thread(ydl.extract_info, url, download=False)
-            self.get_queue(guild_id).append((info['url'], info['title'], info['webpage_url'], author.display_name, author.avatar.url))
-            print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{info["title"]}')
-            return info
-        except Exception as e:
-            print(f'{COLOR["RED"]}ERROR: {COLOR["RESET"]}{e}')
-            return None
+        if self.is_youtube_playlist_url(url):
+            # Configuração para extrair playlists
+            ydl_opts = YDL_OPTIONS_FLAT
+        else:
+            # Configuração para extrair vídeos individuais
+            ydl_opts = YDL_OPTIONS_NO_DOWNLOAD
 
-    async def add_playlist_to_queue(self, ctx, playlist_info):
+        info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False))
+
+        if 'entries' in info:
+            return info, True  # É uma playlist
+        else:
+            return info, False  # É um vídeo individual
+
+    async def add_to_queue(self, ctx, info, is_playlist):
         guild_id = ctx.guild.id
-        await self.send_embed(
-            ctx, f'Adicionado a fila: **{playlist_info["title"]}** com {len(playlist_info["entries"])} músicas.', discord.Color.blue()
-        )
 
-        for entry in playlist_info['entries']:
-            if entry is None:
-                continue  # Ignora entradas que não puderam ser processadas
+        if is_playlist:
+            await self.send_embed(
+                ctx, f'Adicionado a fila: **{info["title"]}** com {len(info["entries"])} músicas.', discord.Color.blue()
+            )
 
-            info = {
-                'url': entry['url'],
-                'title': entry['title'],
-                'webpage_url': entry['url'],
+            for entry in info['entries']:
+                if entry is None:
+                    continue
+
+                song_info = {
+                    'url': entry['url'],
+                    'title': entry['title'],
+                    'webpage_url': entry['url'],
+                    'author': ctx.author.display_name,
+                    'avatar_url': ctx.author.avatar.url
+                }
+                self.get_queue(guild_id).append((song_info['url'], song_info['title'], song_info['webpage_url'], song_info['author'], song_info['avatar_url']))
+                print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{song_info["title"]}')
+        else:
+            song_info = {
+                'url': info['webpage_url'],
+                'title': info['title'],
+                'webpage_url': info['webpage_url'],
                 'author': ctx.author.display_name,
                 'avatar_url': ctx.author.avatar.url
             }
-            self.get_queue(guild_id).append((info['url'], info['title'], info['webpage_url'], info['author'], info['avatar_url']))
-            print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{info["title"]}')
+            self.get_queue(guild_id).append((song_info['url'], song_info['title'], song_info['webpage_url'], song_info['author'], song_info['avatar_url']))
+            await self.send_embed(ctx, f'Adicionado à fila: **{song_info["title"]}**', discord.Color.blue())
+            print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{song_info["title"]}')
 
     @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube e pesquisas.")
     async def play(self, ctx: commands.Context, *, search):
@@ -183,15 +198,13 @@ class Music(commands.Cog):
             return
 
         async with ctx.typing():
-            with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-                if self.is_youtube_playlist_url(search):
-                    playlist_info = await self.extract_playlist_info(search)
-                    await self.add_playlist_to_queue(ctx, playlist_info)
-
-                elif self.is_youtube_url(search):
-                    info = await self.extract_and_add_to_queue(ydl, search, ctx.author, ctx.guild.id)
-                    if info:
-                        await self.send_embed(ctx, f'Adicionado a fila: **{info["title"]}**', discord.Color.blue())
+            with yt_dlp.YoutubeDL(YDL_OPTIONS_NO_DOWNLOAD) as ydl:
+                if self.is_youtube_playlist_url(search) or self.is_youtube_url(search):
+                    try:
+                        info, is_playlist = await self.extract_info(search)
+                        await self.add_to_queue(ctx, info, is_playlist)
+                    except Exception as e:
+                        print(e)
 
                 elif re.match(r'^https?:\/\/', search):
                     await self.send_embed(ctx, "Isso não é um link do YouTube!", discord.Color.red())
@@ -204,10 +217,8 @@ class Music(commands.Cog):
                             info = await asyncio.to_thread(ydl.extract_info, f"ytsearch:{search} -live", download=False)
 
                     if 'entries' in info and len(info['entries']) > 0:
-                        info = info['entries'][0]
-                        info = await self.extract_and_add_to_queue(ydl, info['webpage_url'], ctx.author, ctx.guild.id)
-                        if info:
-                            await self.send_embed(ctx, f'Adicionado à fila: **{info["title"]}**', discord.Color.blue())
+                        info, is_playlist = await self.extract_info(info['entries'][0]['webpage_url'])
+                        await self.add_to_queue(ctx, info, is_playlist)
                     else:
                         await self.send_embed(ctx, "Nenhum resultado encontrado. Tente novamente.", discord.Color.red())
                         return
