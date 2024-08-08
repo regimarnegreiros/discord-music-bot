@@ -10,13 +10,6 @@ YDL_OPTIONS = {
     'noplaylist': True
 }
 
-YDL_OPTIONS_NO_DOWNLOAD = {
-    'quiet': True,
-    'ignoreerrors': True,
-    'noplaylist': True,
-    'skip_download': True
-}
-
 YDL_OPTIONS_FLAT = {
     'extract_flat': True,
     'quiet': True,
