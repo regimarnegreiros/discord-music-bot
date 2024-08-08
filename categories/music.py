@@ -142,17 +142,12 @@ class Music(commands.Cog):
         return playlist_regex.match(url) is not None and 'v=' not in url
 
     # Função assíncrona que extrai informações das músicas
-    async def extract_info(self, url):
-        loop = asyncio.get_running_loop()
-
+    async def extract_info_yt(self, url):
         if self.is_youtube_playlist_url(url):
-            # Configuração para extrair playlists
-            ydl_opts = YDL_OPTIONS_FLAT
-        else:
-            # Configuração para extrair vídeos individuais
-            ydl_opts = YDL_OPTIONS_NO_DOWNLOAD
-
-        info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(ydl_opts).extract_info(url, download=False))
+            loop = asyncio.get_running_loop()
+            info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
+        if self.is_youtube_url(url):
+            info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info, url, download=False)
 
         if 'entries' in info:
             return info, True  # É uma playlist
@@ -182,9 +177,9 @@ class Music(commands.Cog):
                 print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{song_info["title"]}')
         else:
             song_info = {
-                'url': info['webpage_url'],
+                'url': info['url'],
                 'title': info['title'],
-                'webpage_url': info['webpage_url'],
+                'webpage_url': info['url'],
                 'author': ctx.author.display_name,
                 'avatar_url': ctx.author.avatar.url
             }
@@ -198,13 +193,18 @@ class Music(commands.Cog):
             return
 
         async with ctx.typing():
-            with yt_dlp.YoutubeDL(YDL_OPTIONS_NO_DOWNLOAD) as ydl:
-                if self.is_youtube_playlist_url(search) or self.is_youtube_url(search):
+            with yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT) as ydl:
+                if self.is_youtube_playlist_url(search):
                     try:
-                        info, is_playlist = await self.extract_info(search)
+                        info, is_playlist = await self.extract_info_yt(search)
                         await self.add_to_queue(ctx, info, is_playlist)
                     except Exception as e:
                         print(e)
+
+                elif self.is_youtube_url(search):
+                    info = await asyncio.to_thread(ydl.extract_info, search, download=False)
+                    print(info)
+                    await self.add_to_queue(ctx, info, False)
 
                 elif re.match(r'^https?:\/\/', search):
                     await self.send_embed(ctx, "Isso não é um link do YouTube!", discord.Color.red())
@@ -213,12 +213,12 @@ class Music(commands.Cog):
                 else:
                     info = await asyncio.to_thread(ydl.extract_info, f"ytsearch:{search}", download=False)
                     if 'entries' in info and len(info['entries']) > 0:
-                        if info['entries'][0].get('is_live'):
+                        if info['entries'][0]['live_status'] == 'is_live':
                             info = await asyncio.to_thread(ydl.extract_info, f"ytsearch:{search} -live", download=False)
 
                     if 'entries' in info and len(info['entries']) > 0:
-                        info, is_playlist = await self.extract_info(info['entries'][0]['webpage_url'])
-                        await self.add_to_queue(ctx, info, is_playlist)
+                        info = info['entries'][0]
+                        await self.add_to_queue(ctx, info, False)
                     else:
                         await self.send_embed(ctx, "Nenhum resultado encontrado. Tente novamente.", discord.Color.red())
                         return
