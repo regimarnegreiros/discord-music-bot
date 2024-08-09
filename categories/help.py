@@ -2,10 +2,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from main import PREFIX
+from config import PREFIX
 
 if not PREFIX:
-    raise ValueError("O PREFIX não foi encontrado. Verifique o arquivo .env.")
+    raise ValueError("O PREFIX não foi encontrado. Verifique o arquivo config.py.")
 
 class Help(commands.Cog):
     def __init__(self, bot):

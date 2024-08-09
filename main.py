@@ -4,7 +4,7 @@ from discord import app_commands
 import os
 import asyncio
 from dotenv import load_dotenv
-from config import COLOR
+from config import PREFIX
 
 
 ## Configuração do bot:
@@ -14,7 +14,6 @@ permissions = discord.Intents.default()
 permissions.message_content = True
 permissions.members = True
 permissions.voice_states = True
-PREFIX = "-"
 bot = commands.Bot(command_prefix=PREFIX, intents=permissions)
 
 async def load_cogs():
@@ -48,5 +47,4 @@ async def main():
     async with bot:
         await bot.start(TOKEN)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
