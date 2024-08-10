@@ -53,6 +53,9 @@ class Music(commands.Cog):
                     results = self.sp.track(search)
                     entity_name = results['name']
                     tracks = [results]
+                elif re.match(r'^https?:\/\/', search):
+                    await self.send_embed(ctx, "Este link não é válido!", discord.Color.red())
+                    return
                 else:
                     results = self.sp.search(q=search, type='track', limit=1)
                     tracks = results['tracks']['items']
@@ -200,6 +203,12 @@ class Music(commands.Cog):
             print(f"{COLOR['BOLD_WHITE']}Conectado ao canal de voz: {COLOR['RESET']}{voice_channel.name}")
         return True
 
+    def is_spotify_url(self, url):
+        spotify_regex = re.compile(
+            r'^https?:\/\/(open\.spotify\.com)\/.*'
+        )
+        return spotify_regex.match(url) is not None
+
     def is_youtube_url(self, url):
         youtube_regex = re.compile(
             r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]v=.*$'
@@ -269,8 +278,12 @@ class Music(commands.Cog):
                 info, is_playlist = await self.extract_info_yt(search)
                 await self.add_to_queue(ctx, info, is_playlist)
 
+            elif self.is_spotify_url(search):
+                await self.spotify(ctx, search=search)
+                return
+
             elif re.match(r'^https?:\/\/', search):
-                await self.send_embed(ctx, "Isso não é um link do YouTube!", discord.Color.red())
+                await self.send_embed(ctx, "Este link não é válido!", discord.Color.red())
                 return
 
             else:
