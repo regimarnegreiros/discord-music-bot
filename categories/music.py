@@ -5,8 +5,17 @@ import yt_dlp
 import asyncio
 import re
 import random
+import os
+from dotenv import load_dotenv
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 from config import COLOR, FFMPEG_OPTIONS, YDL_OPTIONS, YDL_OPTIONS_FLAT
+
+load_dotenv()
+SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
+SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
+SPOTIPY_REDIRECT_URI = os.getenv('SPOTIPY_REDIRECT_URI')
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -14,6 +23,68 @@ class Music(commands.Cog):
         self.queues = {}
         self.previous_now_playing_msg = None
         super().__init__()
+
+        self.sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
+                client_id=SPOTIPY_CLIENT_ID,
+                client_secret=SPOTIPY_CLIENT_SECRET
+        ))
+
+    @commands.hybrid_command(aliases=['sp'], description="Adiciona uma música ou playlist do Spotify à fila.")
+    async def spotify(self, ctx: commands.Context, *, search):
+        if not await self.connect_to_play(ctx):
+            return
+
+        async with ctx.typing():
+            try:
+                tracks = []
+                entity_name = ""
+
+                if "playlist" in search:
+                    results = self.sp.playlist_tracks(search)
+                    entity_name = self.sp.playlist(search)['name']
+                    tracks = results['items']
+                    await self.send_embed(ctx, f'Adicionando playlist: **{entity_name}** à fila.', discord.Color.blue())
+                elif "album" in search:
+                    results = self.sp.album_tracks(search)
+                    entity_name = self.sp.album(search)['name']
+                    tracks = results['items']
+                    await self.send_embed(ctx, f'Adicionando álbum: **{entity_name}** à fila.', discord.Color.blue())
+                elif "track" in search:
+                    results = self.sp.track(search)
+                    entity_name = results['name']
+                    tracks = [results]
+                else:
+                    results = self.sp.search(q=search, type='track', limit=1)
+                    tracks = results['tracks']['items']
+
+                    if not tracks:
+                        await self.send_embed(ctx, f'Nenhuma música encontrada para a pesquisa: **{search}**', discord.Color.red())
+                        return
+
+                for track in tracks:
+                    track_name = track['name'] if 'name' in track else track['track']['name']
+                    track_artists = ', '.join([artist['name'] for artist in track['artists']]) if 'artists' in track else ', '.join([artist['name'] for artist in track['track']['artists']])
+                    track_url = track['external_urls']['spotify'] if 'external_urls' in track else track['track']['external_urls']['spotify']
+
+                    song_info = {
+                        'title': track_name,
+                        'author': track_artists,
+                        'user_display_name': ctx.author.display_name,
+                        'avatar_url': ctx.author.avatar.url,
+                        'source_url': track_url,
+                        'platform': 'Spotify',
+                        'youtube_url': None  # Será preenchido na hora de tocar
+                    }
+                    self.get_queue(ctx.guild.id).append(song_info)
+                    if not "playlist" in search and not "album" in search:
+                        await self.send_embed(ctx, f'Adicionado à fila: **{track_name}** por **{track_artists}**', discord.Color.blue())
+                    print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{song_info["title"]}')
+
+            except Exception as e:
+                await self.send_embed(ctx, f'Erro ao buscar músicas do Spotify: {str(e)}', discord.Color.red())
+
+        if not ctx.voice_client.is_playing():
+            await self.play_next(ctx)
 
     async def send_embed(self, ctx, description, color):
         embed = discord.Embed(description=description, color=color)
@@ -34,7 +105,7 @@ class Music(commands.Cog):
             )
             return
         
-        queue_list = '\n'.join([f'{idx+1}. {title}' for idx, (_, title, _, _, _) in enumerate(queue[:20])])
+        queue_list = '\n'.join([f'{idx+1}. {song_info["title"]}' for idx, song_info in enumerate(queue[:20])])
         remaining_songs = len(queue) - 20
         message_content = f'```{queue_list}```'
         if remaining_songs > 0:
@@ -156,7 +227,7 @@ class Music(commands.Cog):
 
         if is_playlist:
             await self.send_embed(
-                ctx, f'Adicionado a fila: **{info["title"]}** com {len(info["entries"])} músicas.', discord.Color.blue()
+                ctx, f'Adicionado à fila: **{info["title"]}** com {len(info["entries"])} músicas.', discord.Color.blue()
             )
 
             for entry in info['entries']:
@@ -164,23 +235,27 @@ class Music(commands.Cog):
                     continue
 
                 song_info = {
-                    'url': entry['url'],
                     'title': entry['title'],
-                    'webpage_url': entry['url'],
-                    'author': ctx.author.display_name,
-                    'avatar_url': ctx.author.avatar.url
+                    'author': None,
+                    'user_display_name': ctx.author.display_name,
+                    'avatar_url': ctx.author.avatar.url,
+                    'source_url': entry['url'],  # O URL da fonte original (YouTube)
+                    'platform': 'YouTube',  # Especifica que a fonte é o YouTube
+                    'youtube_url': entry['url']  # Já define o URL do YouTube, pois é uma música do YouTube
                 }
-                self.get_queue(guild_id).append((song_info['url'], song_info['title'], song_info['webpage_url'], song_info['author'], song_info['avatar_url']))
+                self.get_queue(guild_id).append(song_info)
                 print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{song_info["title"]}')
         else:
             song_info = {
-                'url': info['url'],
                 'title': info['title'],
-                'webpage_url': info['url'],
-                'author': ctx.author.display_name,
-                'avatar_url': ctx.author.avatar.url
+                'author': None,
+                'user_display_name': ctx.author.display_name,
+                'avatar_url': ctx.author.avatar.url,
+                'source_url': info.get('webpage_url', info['url']),  # O URL da fonte original (YouTube)
+                'platform': 'YouTube',  # Especifica que a fonte é o YouTube
+                'youtube_url': info['url']  # Já define o URL do YouTube, pois é uma música do YouTube
             }
-            self.get_queue(guild_id).append((song_info['url'], song_info['title'], song_info['webpage_url'], song_info['author'], song_info['avatar_url']))
+            self.get_queue(guild_id).append(song_info)
             await self.send_embed(ctx, f'Adicionado à fila: **{song_info["title"]}**', discord.Color.blue())
             print(f'{COLOR["GREEN"]}Adicionada à fila: {COLOR["RESET"]}{song_info["title"]}')
 
@@ -226,19 +301,43 @@ class Music(commands.Cog):
                     print(f"Erro ao deletar mensagem: {e}")
 
             if queue:
-                url, title, webpage_url, display_name, avatar_url = queue.pop(0)
+                song_info = queue.pop(0)
+                title = song_info.get('title')
+                author = song_info.get('author')
+                user_display_name = song_info.get('user_display_name')
+                avatar_url = song_info.get('avatar_url')
+                source_url = song_info.get('source_url')
+                platform = song_info.get('platform')
+
                 async with ctx.typing():
-                    info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info, url, download=False)
+                    if platform == 'YouTube':
+                        # Extrair informações diretamente do YouTube
+                        info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info, source_url, download=False)
+                    elif platform == 'Spotify':
+                        # Realizar pesquisa no YouTube para encontrar a música do Spotify
+                        info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info, f"ytsearch:{title} {author}", download=False)
+                        
+                        if 'entries' in info and len(info['entries']) > 0:
+                            # Pega o primeiro resultado da pesquisa
+                            info = info['entries'][0]
+                        else:
+                            await self.send_embed(ctx, "Nenhum resultado encontrado para a música do Spotify.", discord.Color.red())
+                            return
+                    else:
+                        await self.send_embed(ctx, "Plataforma desconhecida para a música.", discord.Color.red())
+                        return
+
                     if not info:
                         return
+
                 source = discord.FFmpegPCMAudio(info['url'], **FFMPEG_OPTIONS)
                 ctx.voice_client.play(source, after=lambda _: self.bot.loop.create_task(self.play_next(ctx)))
                 embed = discord.Embed(
                     title="Tocando agora",
-                    description=f'[{title}]({webpage_url})',
-                    color= discord.Color.blue()
+                    description=f'[{title}]({source_url})',
+                    color=discord.Color.blue()
                 )
-                embed.set_footer(text=f"Adicionado por {display_name}", icon_url=avatar_url)
+                embed.set_footer(text=f"Adicionado por {user_display_name}", icon_url=avatar_url)
                 self.previous_now_playing_msg = await ctx.send(embed=embed)
             else:
                 self.previous_now_playing_msg = None

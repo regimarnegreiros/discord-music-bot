@@ -1,14 +1,15 @@
 # Bot de Música para Discord
 
-Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord.py` e `yt_dlp`. O bot foi desenvolvido para tocar músicas do YouTube, gerenciar filas de músicas e lidar com atualizações de estado de voz em canais do Discord. Ele suporta comandos para tocar músicas, pular faixas, visualizar e limpar a fila, e entrar/sair de canais de voz.
+Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord.py` e `yt_dlp`. O bot foi desenvolvido para tocar músicas do YouTube e Spotify, gerenciar filas de músicas e lidar com atualizações de estado de voz em canais do Discord. Ele suporta comandos para tocar músicas, pular faixas, visualizar e limpar a fila, e entrar/sair de canais de voz.
 
 ## Dependências
 
 ### Pacotes Python
 - `discord.py`: Um wrapper Python para a API do Discord.
 - `yt_dlp`: Uma biblioteca de download do YouTube que fornece capacidades de extração para vídeos e playlists do YouTube.
-- `python-dotenv`: Uma biblioteca para carregar variáveis de ambiente a partir de um arquivo `.env`.
+- `spotipy`: Uma biblioteca para interagir com a API do Spotify.
 - `pynacl`: Uma biblioteca para suporte de voz no `discord.py`.
+- `python-dotenv`: Uma biblioteca para carregar variáveis de ambiente a partir de um arquivo `.env`.
 
 ### Dependências Externas
 - `ffmpeg`: Um framework multimídia necessário para streaming de áudio.
@@ -20,7 +21,7 @@ Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord
    Você pode instalar os pacotes Python necessários usando pip:
 
    ```sh
-   pip install discord.py yt-dlp python-dotenv pynacl
+   pip install discord.py yt-dlp spotipy pynacl python-dotenv
    ```
 
 2. **Instalar FFMPEG:**
@@ -31,10 +32,13 @@ Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord
 
 ### Arquivo `.env`
 
-Crie um arquivo chamado `.env` na raiz do seu projeto e adicione o token do seu bot:
+Crie um arquivo chamado `.env` na raiz do seu projeto e adicione as seguintes variáveis de ambiente:
 
 ```env
 TOKEN=SEU_TOKEN
+SPOTIPY_CLIENT_ID=SEU_CLIENT_ID
+SPOTIPY_CLIENT_SECRET=SEU_CLIENT_SECRET
+SPOTIPY_REDIRECT_URI=SEU_REDIRECT_URI
 ```
 
 ### Opções FFMPEG
