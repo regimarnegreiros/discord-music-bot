@@ -450,6 +450,13 @@ class Music(commands.Cog):
                 
                 await bot_voice_state.disconnect()
                 self.get_queue(member.guild.id).clear()
+                guild_id = member.guild.id
+                if guild_id in self.previous_now_playing_msgs:
+                    try:
+                        await self.previous_now_playing_msgs[guild_id].delete()
+                    except Exception as e:
+                        print(f"Erro ao deletar mensagem: {e}")
+                    del self.previous_now_playing_msgs[guild_id]
 
 async def setup(bot):
     await bot.add_cog(Music(bot))
