@@ -401,7 +401,7 @@ class Music(commands.Cog):
             )
         else:
             removed_song = queue.pop(index - 1)
-            await self.send_embed(ctx, f'Removido da fila: **{removed_song[1]}**', discord.Color.blue())
+            await self.send_embed(ctx, f'Removido da fila: **{removed_song.get('title')}**', discord.Color.blue())
 
     @commands.hybrid_command(aliases=['embaralhar', 'aleatorizar'], description="Embaralha a fila de músicas.")
     async def random(self, ctx: commands.Context):
@@ -427,7 +427,7 @@ class Music(commands.Cog):
             song = queue.pop(from_index - 1)
             queue.insert(to_index - 1, song)
             await self.send_embed(
-                ctx, f'Movido **{song[1]}** da posição {from_index} para a posição {to_index}.',
+                ctx, f'Movido **{song.get('title')}** da posição {from_index} para a posição {to_index}.',
                 discord.Color.blue()
             )
 
