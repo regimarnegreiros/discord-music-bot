@@ -21,7 +21,7 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.queues = {}
-        self.previous_now_playing_msg = None
+        self.previous_now_playing_msgs = {}
         super().__init__()
 
         self.sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
@@ -319,11 +319,13 @@ class Music(commands.Cog):
         if ctx.voice_client and ctx.voice_client.is_connected():
             queue = self.get_queue(guild_id)
 
-            if self.previous_now_playing_msg is not None:
+            # Remove a mensagem de status anterior se existir
+            if guild_id in self.previous_now_playing_msgs:
                 try:
-                    await self.previous_now_playing_msg.delete()
+                    await self.previous_now_playing_msgs[guild_id].delete()
                 except Exception as e:
                     print(f"Erro ao deletar mensagem: {e}")
+                del self.previous_now_playing_msgs[guild_id]
 
             if queue:
                 song_info = queue.pop(0)
@@ -383,9 +385,9 @@ class Music(commands.Cog):
                     embed.add_field(name="Artista", value=author)
                     embed.set_footer(text=f"Adicionado por {user_display_name}", icon_url=avatar_url)
     
-                self.previous_now_playing_msg = await ctx.send(file=platform_icon_file, embed=embed)
+                self.previous_now_playing_msgs[guild_id] = await ctx.send(file=platform_icon_file, embed=embed)
             else:
-                self.previous_now_playing_msg = None
+                self.previous_now_playing_msgs[guild_id] = None
                 await self.send_embed(
                     ctx, "A fila de músicas terminou. Adicione mais músicas para continuar ouvindo!",
                     discord.Color.blue()
