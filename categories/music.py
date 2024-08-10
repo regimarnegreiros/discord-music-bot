@@ -224,7 +224,10 @@ class Music(commands.Cog):
     # Função assíncrona que extrai informações das músicas
     async def extract_info_yt(self, url):
         loop = asyncio.get_running_loop()
-        info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
+        if self.is_youtube_playlist_url(url):
+            info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
+        if self.is_youtube_url(url):
+            info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info(url, download=False))
 
         if 'entries' in info:
             return info, True  # É uma playlist
@@ -275,8 +278,11 @@ class Music(commands.Cog):
 
         async with ctx.typing():
             if self.is_youtube_playlist_url(search) or self.is_youtube_url(search):
-                info, is_playlist = await self.extract_info_yt(search)
-                await self.add_to_queue(ctx, info, is_playlist)
+                try:
+                    info, is_playlist = await self.extract_info_yt(search)
+                    await self.add_to_queue(ctx, info, is_playlist)
+                except Exception as e:
+                    print(f'Error: {e}')
 
             elif self.is_spotify_url(search):
                 await self.spotify(ctx, search=search)
