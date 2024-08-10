@@ -11,7 +11,7 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         super().__init__()
-        bot.remove_command('help') # Remover o comando de ajuda padrão
+        bot.remove_command('help')  # Remove o comando de ajuda padrão
 
     def create_command_field(self, command_name, custom_title=None):
         command = self.bot.get_command(command_name)
@@ -21,15 +21,9 @@ class Help(commands.Cog):
         aliases = command.aliases
         description = command.description or "Nenhuma descrição fornecida."
         aliases_str = ", ".join([f"{PREFIX}{alias}" for alias in aliases])
-        if custom_title:
-            field_name = PREFIX + custom_title
-        else:
-            field_name = f"{PREFIX}{command.name}"
+        field_name = f"{PREFIX}{custom_title}" if custom_title else f"{PREFIX}{command.name}"
         
-        if aliases:
-            field_value = f"{description}\nComandos alternativos: {aliases_str}"
-        else:
-            field_value = description
+        field_value = f"{description}\nComandos alternativos: {aliases_str}" if aliases else description
         
         return {"name": field_name, "value": field_value, "inline": False}
 
@@ -44,12 +38,13 @@ class Help(commands.Cog):
         topics = {
             "🎵 Comandos de Música": [
                 ('play', 'play [link/nome da música]'),
+                ('spotify', 'spotify [link/nome da música]'),
                 ('skip', 'skip [quantidade (opcional)]')
             ],
-            "🎶 Comandos de fila": [
+            "🎶 Comandos de Fila": [
                 ('queue', None),
                 ('remove', 'remove [index]'),
-                ('move', 'move [do_index] [para_index]'),
+                ('move', 'move [de_index] [para_index]'),
                 ('clear', None),
                 ('random', None)
             ],
