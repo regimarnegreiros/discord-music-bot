@@ -215,13 +215,13 @@ class Music(commands.Cog):
 
     def is_youtube_url(self, url):
         youtube_regex = re.compile(
-            r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]v=.*$'
+            r'^(https?\:\/\/)?(www\.youtube\.com|music\.youtube\.com|youtu\.?be)\/.*[?&]v=.*$'
         )
         return youtube_regex.match(url) is not None
     
     def is_youtube_playlist_url(self, url):
         playlist_regex = re.compile(
-            r'^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.*[?&]list=.+$'
+            r'^(https?\:\/\/)?(www\.youtube\.com|music\.youtube\.com|youtu\.?be)\/.*[?&]list=.+$'
         )
         return playlist_regex.match(url) is not None and 'v=' not in url
 
@@ -252,7 +252,7 @@ class Music(commands.Cog):
 
                 song_info = {
                     'title': entry['title'],
-                    'author': None,
+                    'author': entry.get('artists', None),
                     'user_display_name': ctx.author.display_name,
                     'avatar_url': ctx.author.avatar.url,
                     'source_url': entry['url'],  # O URL da fonte original (YouTube)
@@ -265,7 +265,7 @@ class Music(commands.Cog):
         else:
             song_info = {
                 'title': info['title'],
-                'author': None,
+                'author': info.get('artists', None),
                 'user_display_name': ctx.author.display_name,
                 'avatar_url': ctx.author.avatar.url,
                 'source_url': info.get('webpage_url', info['url']),  # O URL da fonte original (YouTube)
@@ -320,7 +320,7 @@ class Music(commands.Cog):
             queue = self.get_queue(guild_id)
 
             # Remove a mensagem de status anterior se existir
-            if guild_id in self.previous_now_playing_msgs:
+            if guild_id in self.previous_now_playing_msgs and self.previous_now_playing_msgs[guild_id] is not None:
                 try:
                     await self.previous_now_playing_msgs[guild_id].delete()
                 except Exception as e:
@@ -340,8 +340,14 @@ class Music(commands.Cog):
                 async with ctx.typing():
                     if platform == 'YouTube':
                         # Extrair informações diretamente do YouTube
-                        info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info, source_url, download=False)
-                        track_art_url = info.get('thumbnail')
+                        try:
+                            info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info, source_url, download=False)
+                            author = info.get('artists', None)
+                            track_art_url = info.get('thumbnail')
+                        except Exception as e:
+                            print(f"Erro ao extrair informações do YouTube: {e}")
+                            self.bot.loop.create_task(self.play_next(ctx))
+                            
                     elif platform == 'Spotify':
                         # Realizar pesquisa no YouTube para encontrar a música do Spotify
                         info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info, f"ytsearch:{title} {author}", download=False)
@@ -371,6 +377,8 @@ class Music(commands.Cog):
                     platform_icon_file = discord.File('icons/youtube-icon.png', 'youtube-icon.png')
                     embed.set_author(name=platform,icon_url='attachment://youtube-icon.png', url='https://www.youtube.com/')
                     embed.set_thumbnail(url=track_art_url)
+                    if author is not None:
+                        embed.add_field(name="Artista", value=', '.join(author))
                     embed.set_footer(text=f"Adicionado por {user_display_name}", icon_url=avatar_url)
                 
                 elif platform == 'Spotify':
