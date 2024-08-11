@@ -226,17 +226,22 @@ class Music(commands.Cog):
         return playlist_regex.match(url) is not None and 'v=' not in url
 
     # Função assíncrona que extrai informações das músicas
-    async def extract_info_yt(self, url):
-        loop = asyncio.get_running_loop()
-        if self.is_youtube_playlist_url(url):
-            info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
-        if self.is_youtube_url(url):
-            info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info(url, download=False))
+    async def extract_info_yt(self, ctx, url):
+        try:
+            loop = asyncio.get_running_loop()
+            if self.is_youtube_playlist_url(url):
+                info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info(url, download=False))
+            if self.is_youtube_url(url):
+                info = await loop.run_in_executor(None, lambda: yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info(url, download=False))
 
-        if 'entries' in info:
-            return info, True  # É uma playlist
-        else:
-            return info, False  # É um vídeo individual
+            if 'entries' in info:
+                return info, True  # É uma playlist
+            else:
+                return info, False  # É um vídeo individual
+        except Exception as e:
+            await self.send_embed(ctx, "Formato não suportado!", discord.Color.red())
+            print(e)
+            return None, None
 
     async def add_to_queue(self, ctx, info, is_playlist):
         guild_id = ctx.guild.id
@@ -285,7 +290,9 @@ class Music(commands.Cog):
         async with ctx.typing():
             if self.is_youtube_playlist_url(search) or self.is_youtube_url(search):
                 try:
-                    info, is_playlist = await self.extract_info_yt(search)
+                    info, is_playlist = await self.extract_info_yt(ctx, search)
+                    if info is None:
+                        return
                     await self.add_to_queue(ctx, info, is_playlist)
                 except Exception as e:
                     print(f'Error: {e}')
