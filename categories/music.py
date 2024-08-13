@@ -38,6 +38,7 @@ class Music(commands.Cog):
             try:
                 tracks = []
                 entity_name = ""
+                album_art_url = None
 
                 if "playlist" in search:
                     results = self.sp.playlist_tracks(search)
@@ -47,6 +48,7 @@ class Music(commands.Cog):
                 elif "album" in search:
                     results = self.sp.album_tracks(search)
                     entity_name = self.sp.album(search)['name']
+                    album_art_url = self.sp.album(search)['images'][0]['url']  # Extrai a capa do álbum
                     tracks = results['items']
                     await self.send_embed(ctx, f'Adicionando álbum: **{entity_name}** à fila.', discord.Color.from_rgb(24, 216, 96))
                 elif "track" in search:
@@ -65,12 +67,15 @@ class Music(commands.Cog):
                         return
 
                 for track in tracks:
-                    track_name = track['name'] if 'name' in track else track['track']['name']
-                    track_artists = ', '.join([artist['name'] for artist in track['artists']]) if 'artists' in track else ', '.join([artist['name'] for artist in track['track']['artists']])
-                    track_url = track['external_urls']['spotify'] if 'external_urls' in track else track['track']['external_urls']['spotify']
-                   
-                    # Extrair a URL da capa da música
-                    track_art_url = track['album']['images'][0]['url'] if 'album' in track else track['track']['album']['images'][0]['url']
+                    # Verifica se a faixa possui o campo 'track' e extrai as informações de acordo
+                    track_info = track.get('track', track)
+
+                    track_name = track_info['name']
+                    track_artists = ', '.join([artist['name'] for artist in track_info['artists']])
+                    track_url = track_info['external_urls']['spotify']
+                    
+                    # Usa a capa do álbum já extraída ou extrai da faixa
+                    track_art_url = album_art_url if album_art_url else track_info['album']['images'][0]['url']
 
                     song_info = {
                         'title': track_name,
