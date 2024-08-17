@@ -471,7 +471,7 @@ class Music(commands.Cog):
                 await bot_voice_state.disconnect()
                 self.get_queue(member.guild.id).clear()
                 guild_id = member.guild.id
-                if guild_id in self.previous_now_playing_msgs:
+                if guild_id in self.previous_now_playing_msgs and self.previous_now_playing_msgs[guild_id] is not None:
                     try:
                         await self.previous_now_playing_msgs[guild_id].delete()
                     except Exception as e:
