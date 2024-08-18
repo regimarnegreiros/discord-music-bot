@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from config import PREFIX
+from config.settings import PREFIX
 
 if not PREFIX:
     raise ValueError("O PREFIX não foi encontrado. Verifique o arquivo config.py.")
@@ -39,14 +39,16 @@ class Help(commands.Cog):
             "🎵 Comandos de Música": [
                 ('play', 'play [link/nome da música]'),
                 ('spotify', 'spotify [link/nome da música]'),
-                ('skip', 'skip [quantidade (opcional)]')
+                ('youtube', 'youtube [link/nome da música]'),
+                ('skip', None)
             ],
             "🎶 Comandos de Fila": [
                 ('queue', None),
+                ('skipto', None),
                 ('remove', 'remove [index]'),
                 ('move', 'move [de_index] [para_index]'),
                 ('clear', None),
-                ('random', None)
+                ('shuffle', None)
             ],
             "🔗 Comandos de Conexão": [
                 ('join', None),

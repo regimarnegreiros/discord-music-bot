@@ -4,7 +4,7 @@ from discord import app_commands
 import os
 import asyncio
 from dotenv import load_dotenv
-from config import PREFIX
+from config.settings import PREFIX
 
 
 ## Configuração do bot:
@@ -17,10 +17,10 @@ permissions.voice_states = True
 bot = commands.Bot(command_prefix=PREFIX, intents=permissions)
 
 async def load_cogs():
-    for arquivo in os.listdir('categories'):
+    for arquivo in os.listdir('cogs'):
         if arquivo.endswith('.py'):
             try:
-                await bot.load_extension(f"categories.{arquivo[:-3]}")
+                await bot.load_extension(f"cogs.{arquivo[:-3]}")
             except Exception as e:
                 print(f'Erro ao carregar cog {arquivo}: {e}')
 

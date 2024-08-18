@@ -21,7 +21,7 @@ Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord
    Você pode instalar os pacotes Python necessários usando pip:
 
    ```sh
-   pip install discord.py yt-dlp spotipy pynacl python-dotenv
+   pip install -r requirements.txt
    ```
 
 2. **Instalar FFMPEG:**
@@ -38,7 +38,6 @@ Crie um arquivo chamado `.env` na raiz do seu projeto e adicione as seguintes va
 TOKEN=SEU_TOKEN
 SPOTIPY_CLIENT_ID=SEU_CLIENT_ID
 SPOTIPY_CLIENT_SECRET=SEU_CLIENT_SECRET
-SPOTIPY_REDIRECT_URI=SEU_REDIRECT_URI
 ```
 
 ### Opções FFMPEG
