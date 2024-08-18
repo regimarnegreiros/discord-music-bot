@@ -21,7 +21,7 @@ class Exit(commands.Cog):
         await voice_client.disconnect()
 
         if ctx.interaction:
-            message = await self.send_embed(ctx, "Saindo do canal de voz!", discord.Color.green())
+            message = await send_simple_embed(ctx, "Saindo do canal de voz!", discord.Color.green())
             await message.add_reaction('👋')
         else:
             await ctx.message.add_reaction('👋')

@@ -24,7 +24,7 @@ class Queue(commands.Cog):
         message_content = f'```{queue_list}```'
         if remaining_songs > 0:
             message_content += f'```\n...e mais {remaining_songs} músicas na fila.```'
-        await ctx.send(message_content)
+        await ctx.send(message_content, silent=True)
 
 async def setup(bot):
     await bot.add_cog(Queue(bot))

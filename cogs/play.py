@@ -16,7 +16,7 @@ class Play(commands.Cog):
             if spotify_command:
                 await ctx.invoke(spotify_command, search=search)
             else:
-                await ctx.send("Comando `spotify` não encontrado.")
+                await ctx.send("Comando `spotify` não encontrado.", silent=True)
             return
         
         try:
@@ -24,7 +24,7 @@ class Play(commands.Cog):
             if youtube_command:
                 await ctx.invoke(youtube_command, search=search)
             else:
-                await ctx.send("Comando `youtube` não encontrado.")
+                await ctx.send("Comando `youtube` não encontrado.", silent=True)
         except Exception as e:
             print(e)
 

@@ -63,7 +63,7 @@ class Help(commands.Cog):
                 if field:
                     embed.add_field(**field)
 
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, silent=True)
 
 async def setup(bot):
     await bot.add_cog(Help(bot))
