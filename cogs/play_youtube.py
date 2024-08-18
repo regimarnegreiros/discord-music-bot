@@ -10,8 +10,6 @@ from config.colors import COLOR
 from utils.queue_manager import queue_manager
 from utils.play_next import play_next
 
-import json
-
 class PlayYoutube(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -28,11 +26,6 @@ class PlayYoutube(commands.Cog):
                 return None, None
 
             info = await asyncio.to_thread(yt_dlp.YoutubeDL(ydl_opts).extract_info, url, download=False)
-
-            filename = "ytinfo.json"
-            with open(filename, "w", encoding="utf-8") as json_file:
-                json.dump(info, json_file, ensure_ascii=False, indent=4)
-            
             is_playlist = 'entries' in info
             return info, is_playlist
         except Exception as e:
@@ -85,10 +78,6 @@ class PlayYoutube(commands.Cog):
                 return
             else:
                 info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info, f"ytsearch:{search}", download=False)
-
-                filename = "ytinfo.json"
-                with open(filename, "w", encoding="utf-8") as json_file:
-                    json.dump(info, json_file, ensure_ascii=False, indent=4)
 
                 if info and info.get('entries', []):
                     if info['entries'][0].get('live_status') == 'is_live':
