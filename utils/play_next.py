@@ -43,7 +43,8 @@ async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
                 if platform == 'YouTube':
                     info = await asyncio.to_thread(yt_dlp.YoutubeDL(ydl_opts).extract_info, source_url, download=False)
                     author = info.get('artists', None)
-                    author = ', '.join(author)
+                    if author:
+                        author = ', '.join(author)
                     track_art_url = track_art_url or info.get('thumbnail')
                 elif platform == 'Spotify':
                     info = await asyncio.to_thread(yt_dlp.YoutubeDL(ydl_opts).extract_info, f"ytsearch:{title} {author}", download=False)

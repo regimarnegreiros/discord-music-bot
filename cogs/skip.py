@@ -21,8 +21,11 @@ class Skip(commands.Cog):
                     await ctx.message.add_reaction('⏭️')
             else:
                 ctx.voice_client.stop()
-                await ctx.message.add_reaction('⏭️')
-                await send_simple_embed(ctx, "Não há músicas na fila para pular.", discord.Color.red())
+                if ctx.interaction:
+                    await send_simple_embed(ctx, "Não há músicas na fila para pular.", discord.Color.red())
+                else:
+                    await ctx.message.add_reaction('⏭️')
+
 
 async def setup(bot):
     await bot.add_cog(Skip(bot))
