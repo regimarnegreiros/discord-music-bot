@@ -82,6 +82,7 @@ async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
 
         platform_icon_file = discord.File(f'icons/{icon_map[platform]}', icon_map[platform])
         previous_now_playing_msgs[guild_id] = await ctx.send(file=platform_icon_file, embed=embed, silent=True)
+        print(f'{COLOR["BLUE"]}Tocando agora: {COLOR["RESET"]}{title}')
 
     except Exception as e:
         print(f"Erro na função play_next: {e}")

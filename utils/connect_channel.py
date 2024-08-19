@@ -11,5 +11,5 @@ async def connect_channel(ctx: commands.Context):
         return False
     if not ctx.voice_client:
         await voice_channel.connect()
-        print(f"{COLOR['BOLD_WHITE']}Conectado ao canal de voz: {COLOR['RESET']}{voice_channel.name}")
+        # print(f"{COLOR['BOLD_WHITE']}Conectado ao canal de voz: {COLOR['RESET']}{voice_channel.name}")
     return True

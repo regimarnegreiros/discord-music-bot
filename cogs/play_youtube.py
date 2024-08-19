@@ -33,10 +33,6 @@ class PlayYoutube(commands.Cog):
             print(e)
             return None, None
 
-    async def add_song_to_queue(self, ctx, song_info):
-        guild_id = ctx.guild.id
-        queue_manager.add_to_queue(guild_id, song_info)
-
     async def process_entry(self, ctx, entry):
         if entry is None:
             return
@@ -51,7 +47,9 @@ class PlayYoutube(commands.Cog):
             'youtube_url': entry['url'],
             'track_art_url': None
         }
-        await self.add_song_to_queue(ctx, song_info)
+        guild_id = ctx.guild.id
+        queue_manager.add_to_queue(guild_id, song_info)
+        print(f'{COLOR["GREEN"]}Adicionado à fila: {COLOR["RESET"]}{song_info["title"]}')
 
     async def add_to_queue(self, ctx, info, is_playlist):
         if is_playlist:

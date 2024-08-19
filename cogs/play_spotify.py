@@ -71,6 +71,7 @@ class PlaySpotify(commands.Cog):
                         'track_art_url': album_art_url or track_info['album']['images'][0]['url']
                     }
                     queue_manager.add_to_queue(ctx.guild.id, song_info)
+                    print(f'{COLOR["GREEN"]}Adicionado à fila: {COLOR["RESET"]}{song_info["title"]}')
 
                     if not ("playlist" in search or "album" in search):
                         await send_simple_embed(ctx, f'Adicionado à fila: **{song_info["title"]}** por **{song_info["author"]}**', discord.Color.from_rgb(24, 216, 96))
