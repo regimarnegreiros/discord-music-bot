@@ -38,7 +38,7 @@ async def on_ready():
     await bot.tree.sync()
     await bot.change_presence(
         status=discord.Status.do_not_disturb, 
-        activity=discord.Activity(type=discord.ActivityType.listening, name=f"{PREFIX}help")
+        activity=discord.Streaming(name=f"{PREFIX}help", url="https://www.youtube.com/watch?v=SECVGN4Bsgg")
     )
     print(f'Conectado como {bot.user} (ID: {bot.user.id})')
 
