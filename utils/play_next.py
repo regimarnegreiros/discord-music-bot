@@ -33,9 +33,14 @@ async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
             return
 
         song_info = queue.pop(0)
-        title, author, platform = song_info['title'], song_info['author'], song_info['platform']
-        user_display_name, avatar_url, track_art_url = song_info['user_display_name'], song_info['avatar_url'], song_info['track_art_url']
-        source_url = song_info['source_url']
+        title = song_info.get('title', None)
+        author = song_info.get('author', None)
+        platform = song_info.get('platform', None)
+        user_display_name = song_info.get('user_display_name', None)
+        avatar_url = song_info.get('avatar_url', None)
+        track_art_url = song_info.get('track_art_url', None)
+        source_url = song_info.get('source_url', None)
+        youtube_url = song_info.get('youtube_url', None)
 
         async with ctx.typing():
             try:
