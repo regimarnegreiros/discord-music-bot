@@ -9,6 +9,7 @@ from utils.send_embed import *
 from config.colors import COLOR
 from utils.queue_manager import queue_manager
 from utils.play_next import play_next
+from utils.save_to_json import save_info_to_json
 
 class PlayYoutube(commands.Cog):
     def __init__(self, bot):
@@ -22,7 +23,7 @@ class PlayYoutube(commands.Cog):
 
         async with ctx.typing():
             if is_youtube_playlist_url(search) or is_youtube_url(search):
-                info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS_FLAT).extract_info, search, download=False)
+                info = await asyncio.to_thread(yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info, search, download=False)
                 if 'entries' in info:
                     is_playlist = True
                     tracks = info['entries']
