@@ -106,12 +106,21 @@ class Help(commands.Cog):
         # Desativar o botão 'Próximo' se estiver na última página
         next_button.disabled = current_page == len(pages) - 1
 
-        view = View()
+        # Cria uma nova View com um timeout de 60 segundos
+        view = View(timeout=60)
         view.add_item(prev_button)
         view.add_item(next_button)
 
+        # Sobrescreve o método on_timeout para apagar a mensagem após 1 minuto sem interação
+        async def on_timeout():
+            if view.message:
+                await view.message.delete()
+
+        # Atribui a função on_timeout à view
+        view.on_timeout = on_timeout
+
         # Envia o embed inicial com os botões
-        await ctx.send(embed=pages[current_page], view=view, silent=True)
+        view.message = await ctx.send(embed=pages[current_page], view=view, silent=True)
 
 async def setup(bot):
     await bot.add_cog(Help(bot))

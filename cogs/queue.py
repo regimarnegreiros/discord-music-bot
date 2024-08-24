@@ -90,6 +90,17 @@ class QueueView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user == self.ctx.author
 
+    async def on_timeout(self):
+        # Remove a view (desabilitando os botões) e edita a mensagem para indicar que expirou
+        for item in self.children:
+            item.disabled = True
+        if hasattr(self, 'message'):
+            embed = discord.Embed(
+                description="Tempo esgotado! Utilize o comando novamente para ver a fila.",
+                color=discord.Color.blue()
+            )
+            await self.message.edit(content=None,embed=embed, view=None)
+
 class Queue(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
