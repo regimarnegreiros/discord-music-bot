@@ -8,7 +8,7 @@ class Move(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['mover'], description="Move uma música na fila de uma posição para outra.")
+    @commands.hybrid_command(aliases=['mover'], description="Move uma música na fila.")
     async def move(self, ctx: commands.Context, from_index: int, to_index: int):
         queue = queue_manager.get_queue(ctx.guild.id)
         if from_index < 1 or from_index > len(queue) or to_index < 1 or to_index > len(queue):

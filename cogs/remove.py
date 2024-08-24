@@ -8,7 +8,7 @@ class Remove(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['remover'], description="Remove uma música da fila pelo índice.")
+    @commands.hybrid_command(aliases=['remover'], description="Remove música da fila.")
     async def remove(self, ctx: commands.Context, index: int):
         queue = queue_manager.get_queue(ctx.guild.id)
         if index < 1 or index > len(queue):

@@ -8,8 +8,8 @@ class ClearQueue(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila de músicas.")
-    async def clear_queue(self, ctx: commands.Context):
+    @commands.hybrid_command(aliases=['clear', 'limpar'], description="Limpa a fila.")
+    async def clearqueue(self, ctx: commands.Context):
         queue_manager.clear_queue(ctx.guild.id)
         await send_simple_embed(ctx, "A fila foi limpa!", discord.Color.blue())
 

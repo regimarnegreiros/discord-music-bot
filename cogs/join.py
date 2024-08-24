@@ -9,7 +9,7 @@ class Join(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['entrar', 'connect'], description="Faz o bot entrar no canal de voz.")
+    @commands.hybrid_command(aliases=['entrar', 'connect'], description="Entra no canal de voz.")
     async def join(self, ctx: commands.Context):
         if not ctx.author.voice:
             await send_simple_embed(ctx, "Você precisa estar em um canal de voz para usar este comando!", discord.Color.red())

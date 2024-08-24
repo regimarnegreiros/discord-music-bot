@@ -8,7 +8,7 @@ class Play(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila. Suporta links do YouTube, Spotify e pesquisas.")
+    @commands.hybrid_command(aliases=['p'], description="Adiciona uma música à fila.")
     async def play(self, ctx: commands.Context, *, search):
         
         if is_spotify_url(search):

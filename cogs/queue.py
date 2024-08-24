@@ -44,14 +44,14 @@ class QueueView(discord.ui.View):
         else:
             await self.message.edit(content=message_content, embed=None, view=self)
 
-    @discord.ui.button(label="Primeira", style=discord.ButtonStyle.blurple, disabled=True)
+    @discord.ui.button(label="<<", style=discord.ButtonStyle.blurple, disabled=True)
     async def first_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = 0
         await self.update_buttons()
         await self.send_queue_page()
         await interaction.response.defer()
 
-    @discord.ui.button(label="Anterior", style=discord.ButtonStyle.gray, disabled=True)
+    @discord.ui.button(label="<", style=discord.ButtonStyle.gray, disabled=True)
     async def previous_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page -= 1
         self.max_page = (len(self.queue) - 1) // self.items_per_page
@@ -61,7 +61,7 @@ class QueueView(discord.ui.View):
         await self.send_queue_page()
         await interaction.response.defer()
 
-    @discord.ui.button(label="Próxima", style=discord.ButtonStyle.gray)
+    @discord.ui.button(label=">", style=discord.ButtonStyle.gray)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page += 1
         self.max_page = (len(self.queue) - 1) // self.items_per_page
@@ -71,7 +71,7 @@ class QueueView(discord.ui.View):
         await self.send_queue_page()
         await interaction.response.defer()
 
-    @discord.ui.button(label="Última", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label=">>", style=discord.ButtonStyle.blurple)
     async def last_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.page = self.max_page
         self.max_page = (len(self.queue) - 1) // self.items_per_page

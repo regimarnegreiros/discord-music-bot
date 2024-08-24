@@ -7,7 +7,7 @@ class Exit(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['sair', 'disconnect'], description="Faz o bot sair do canal de voz.")
+    @commands.hybrid_command(aliases=['sair', 'disconnect'], description="Sai do canal de voz.")
     async def exit(self, ctx: commands.Context):
         voice_client = ctx.guild.voice_client
 

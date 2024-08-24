@@ -8,7 +8,7 @@ class Skip(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['pular', 'next'], description="Pula para a próxima música na fila.")
+    @commands.hybrid_command(aliases=['pular', 'next'], description="Pula para a próxima música.")
     async def skip(self, ctx: commands.Context):
         queue = queue_manager.get_queue(ctx.guild.id)
         

@@ -26,7 +26,7 @@ class PlaySpotify(commands.Cog):
         )
         super().__init__()
 
-    @commands.hybrid_command(aliases=['sp'], description="Adiciona uma música ou playlist do Spotify à fila.")
+    @commands.hybrid_command(aliases=['sp'], description="Adiciona música/playlist/álbum do Spotify.")
     async def spotify(self, ctx: commands.Context, *, search):
         if not await connect_channel(ctx):
             return

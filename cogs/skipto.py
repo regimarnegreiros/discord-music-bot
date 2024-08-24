@@ -8,7 +8,7 @@ class SkipTo(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['pularpara', 'jump'], description="Pula para uma música específica na fila.")
+    @commands.hybrid_command(aliases=['pularpara', 'jump'], description="Pula para uma música específica.")
     async def skipto(self, ctx: commands.Context, index: int):
         queue = queue_manager.get_queue(ctx.guild.id)
 

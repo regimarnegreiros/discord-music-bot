@@ -8,7 +8,7 @@ class Shuffle(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['random' ,'embaralhar', 'aleatorizar'], description="Embaralha a fila de músicas.")
+    @commands.hybrid_command(aliases=['random' ,'embaralhar', 'aleatorizar'], description="Embaralha a fila.")
     async def shuffle(self, ctx: commands.Context):
         queue = queue_manager.get_queue(ctx.guild.id)
         if not queue:

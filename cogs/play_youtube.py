@@ -15,7 +15,7 @@ class PlayYoutube(commands.Cog):
         self.bot = bot
         super().__init__()
 
-    @commands.hybrid_command(aliases=['yt'], description="Adiciona uma música do youtube à fila. Suporta links do YouTube e pesquisas.")
+    @commands.hybrid_command(aliases=['yt'], description="Adiciona música/playlist do YouTube.")
     async def youtube(self, ctx: commands.Context, *, search):
         if not await connect_channel(ctx):
             return
