@@ -85,7 +85,7 @@ class PlayDeezer(commands.Cog):
                 for track in tracks:
                     song_info = {
                         'title': track.title,
-                        'author': ', '.join(artist.name for artist in track.contributors),
+                        'author': track.artist.name,
                         'user_display_name': ctx.author.display_name,
                         'avatar_url': ctx.author.avatar.url,
                         'source_url': track.link,
