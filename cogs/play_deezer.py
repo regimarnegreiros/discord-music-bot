@@ -83,22 +83,16 @@ class PlayDeezer(commands.Cog):
                     await send_simple_embed(ctx, f'Adicionando **{entity_name}** à fila.', discord.Color.from_rgb(161, 56, 255))
 
                 for track in tracks:
-                    # Verifica se há vários artistas usando 'contributors'
-                    if hasattr(track, 'contributors') and track.contributors:
-                        artists = ', '.join(artist.name for artist in track.contributors)
-                    else:
-                        # Fallback para o artista principal, caso 'contributors' não esteja disponível
-                        artists = track.artist.name if hasattr(track, 'artist') else 'Desconhecido'
-                    
                     song_info = {
                         'title': track.title,
-                        'author': artists,
+                        'author': ', '.join(artist.name for artist in track.contributors),
                         'user_display_name': ctx.author.display_name,
                         'avatar_url': ctx.author.avatar.url,
                         'source_url': track.link,
                         'platform': 'Deezer',
                         'track_art_url': album_art_url or track.album.cover_xl
                     }
+                    
                     queue_manager.add_to_queue(ctx.guild.id, song_info)
                     print(f'{COLOR["GREEN"]}Adicionado à fila: {COLOR["RESET"]}{song_info["title"]}')
 

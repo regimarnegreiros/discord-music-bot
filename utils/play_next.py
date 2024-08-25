@@ -99,6 +99,8 @@ async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
         embed.set_thumbnail(url=track_art_url)
         if author is not None:
             embed.add_field(name="Artista", value=author)
+        if info["duration"] > 420:
+            embed.add_field(name="Duração", value=info["duration_string"], inline=True)
         embed.set_footer(text=f"Adicionado por {user_display_name}", icon_url=avatar_url)
 
         platform_icon_file = discord.File(f'icons/{icon_map[platform]}', icon_map[platform])
