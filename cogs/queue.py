@@ -28,7 +28,7 @@ class QueueView(discord.ui.View):
             if hasattr(self, 'message'):
                 await self.message.edit(content=None, embed=embed, view=None)
             else:
-                self.message = await self.ctx.send(embed=embed)
+                self.message = await self.ctx.send(embed=embed, silent=True)
             return
 
         start = self.page * self.items_per_page
@@ -40,7 +40,7 @@ class QueueView(discord.ui.View):
             message_content += f'```\n...e mais {remaining_songs} músicas na fila.```'
 
         if not hasattr(self, 'message'):
-            self.message = await self.ctx.send(content=message_content, view=self)
+            self.message = await self.ctx.send(content=message_content, view=self, silent=True)
         else:
             await self.message.edit(content=message_content, embed=None, view=self)
 
@@ -99,7 +99,7 @@ class QueueView(discord.ui.View):
                 description="Tempo esgotado! Utilize o comando novamente para ver a fila.",
                 color=discord.Color.blue()
             )
-            await self.message.edit(content=None,embed=embed, view=None)
+            await self.message.edit(content=None, embed=embed, view=None)
 
 class Queue(commands.Cog):
     def __init__(self, bot):
