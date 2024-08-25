@@ -45,6 +45,7 @@ class Help(commands.Cog):
             "🎵 Plataformas": [
                 ('spotify', 'spotify [link/nome]'),
                 ('youtube', 'youtube [link/nome]'),
+                ('deezer', 'deezer [link/nome]')
             ],
             "🎶 Comandos de Fila": [
                 ('queue', None),

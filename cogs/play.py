@@ -19,6 +19,14 @@ class Play(commands.Cog):
                 await ctx.send("Comando `spotify` não encontrado.", silent=True)
             return
         
+        if is_deezer_url(search):
+            deezer_command = self.bot.get_command('deezer')
+            if deezer_command:
+                await ctx.invoke(deezer_command, search=search)
+            else:
+                await ctx.send("Comando `deezer` não encontrado.", silent=True)
+            return
+
         try:
             youtube_command = self.bot.get_command('youtube')
             if youtube_command:

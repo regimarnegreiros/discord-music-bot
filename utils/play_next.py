@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import yt_dlp
 import asyncio
+import deezer
 
 from config.colors import COLOR
 from config.ffmpeg import FFMPEG_OPTIONS
@@ -57,6 +58,12 @@ async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
                         await send_simple_embed(ctx, "Nenhum resultado encontrado para a música do Spotify.", discord.Color.red())
                         return
                     info = info['entries'][0]
+                elif platform == 'Deezer':
+                    info = await asyncio.to_thread(yt_dlp.YoutubeDL(ydl_opts).extract_info, f"ytsearch:{title} {author}", download=False)
+                    if not info.get('entries'):
+                        await send_simple_embed(ctx, "Nenhum resultado encontrado para a música do Deezer.", discord.Color.red())
+                        return
+                    info = info['entries'][0]
                 else:
                     await send_simple_embed(ctx, "Plataforma desconhecida para a música.", discord.Color.red())
                     return
@@ -72,8 +79,16 @@ async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
         source = discord.FFmpegPCMAudio(info['url'], **FFMPEG_OPTIONS)
         ctx.voice_client.play(source, after=lambda _: bot.loop.create_task(play_next(ctx, bot, queue_manager)))
 
-        color_map = {'YouTube': discord.Color.from_rgb(255, 0, 0), 'Spotify': discord.Color.from_rgb(24, 216, 96)}
-        icon_map = {'YouTube': 'youtube-icon.png', 'Spotify': 'spotify-icon.png'}
+        color_map = {
+            'YouTube': discord.Color.from_rgb(255, 0, 0),
+            'Spotify': discord.Color.from_rgb(24, 216, 96),
+            'Deezer': discord.Color.from_rgb(161, 56, 255)
+        }
+        icon_map = {
+            'YouTube': 'youtube-icon.png',
+            'Spotify': 'spotify-icon.png',
+            'Deezer': 'deezer-icon.png'
+        }
 
         embed = discord.Embed(
             title="Tocando agora",

@@ -1,5 +1,6 @@
 discord.py 
 yt-dlp 
 spotipy 
+deezer-python
 pynacl 
 python-dotenv

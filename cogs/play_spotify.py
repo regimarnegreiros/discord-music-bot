@@ -57,7 +57,7 @@ class PlaySpotify(commands.Cog):
                         return
 
                 if entity_name:
-                    await send_simple_embed(ctx, f'Adicionando {entity_name} à fila.', discord.Color.from_rgb(24, 216, 96))
+                    await send_simple_embed(ctx, f'Adicionando **{entity_name}** à fila.', discord.Color.from_rgb(24, 216, 96))
 
                 for track in tracks:
                     track_info = track.get('track', track)
