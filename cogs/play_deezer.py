@@ -7,12 +7,30 @@ from utils.send_embed import send_simple_embed
 from utils.queue_manager import queue_manager
 from utils.play_next import play_next
 from config.colors import COLOR
+import requests  # Adicionado para resolver links curtos
 
 class PlayDeezer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.client = deezer.Client()
         super().__init__()
+
+    def resolve_deezer_link(self, short_link):
+        # Resolve o link curto do Deezer para obter o ID real e o tipo de entidade (track, album, playlist).
+        try:
+            response = requests.head(short_link, allow_redirects=True)
+            final_url = response.url
+            if "playlist" in final_url:
+                return "playlist", final_url.split("/")[-1]
+            elif "album" in final_url:
+                return "album", final_url.split("/")[-1]
+            elif "track" in final_url:
+                return "track", final_url.split("/")[-1]
+            else:
+                return None, None
+        except Exception as e:
+            print(f"Erro ao resolver link do Deezer: {e}")
+            return None, None
 
     @commands.hybrid_command(aliases=['dz'], description="Adiciona música/playlist/álbum do Deezer.")
     async def deezer(self, ctx: commands.Context, *, search):
@@ -24,19 +42,28 @@ class PlayDeezer(commands.Cog):
                 tracks = []
                 entity_name, album_art_url = None, None
 
-                if "playlist" in search:
-                    playlist_id = search.split("/")[-1]
+                # Verifica se o link é um link curto do Deezer
+                if "deezer.page.link" in search:
+                    entity_type, entity_id = self.resolve_deezer_link(search)
+                    if not entity_type:
+                        await send_simple_embed(ctx, "Este link não é válido!", discord.Color.red())
+                        return
+                else:
+                    entity_type, entity_id = None, None
+
+                if "playlist" in search or entity_type == "playlist":
+                    playlist_id = entity_id or search.split("/")[-1]
                     playlist = self.client.get_playlist(playlist_id)
                     entity_name = playlist.title
                     tracks = playlist.tracks
-                elif "album" in search:
-                    album_id = search.split("/")[-1]
+                elif "album" in search or entity_type == "album":
+                    album_id = entity_id or search.split("/")[-1]
                     album = self.client.get_album(album_id)
                     entity_name = album.title
                     album_art_url = album.cover_xl
                     tracks = album.tracks
-                elif "track" in search:
-                    track_id = search.split("/")[-1]
+                elif "track" in search or entity_type == "track":
+                    track_id = entity_id or search.split("/")[-1]
                     track = self.client.get_track(track_id)
                     tracks = [track]
                 elif is_valid_url(search):
@@ -69,7 +96,7 @@ class PlayDeezer(commands.Cog):
                     queue_manager.add_to_queue(ctx.guild.id, song_info)
                     print(f'{COLOR["GREEN"]}Adicionado à fila: {COLOR["RESET"]}{song_info["title"]}')
 
-                    if not ("playlist" in search or "album" in search):
+                    if not ("playlist" in search or "album" in search or entity_type == "playlist" or entity_type == "album"):
                         await send_simple_embed(
                             ctx, f'Adicionado à fila: **{song_info["title"]}** por **{song_info["author"]}**', 
                             discord.Color.from_rgb(161, 56, 255)

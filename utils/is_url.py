@@ -26,6 +26,6 @@ def is_valid_url(url):
 
 def is_deezer_url(url):
     deezer_regex = re.compile(
-        r'^https?:\/\/(www\.deezer\.com)\/.*'
+        r'^https?:\/\/(?:www\.deezer\.com|deezer\.page\.link)\/.*'
     )
     return deezer_regex.match(url) is not None
