@@ -1,6 +1,6 @@
 # Bot de Música para Discord
 
-Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord.py` e `yt_dlp`. O bot foi desenvolvido para tocar músicas do YouTube e Spotify, gerenciar filas de músicas e lidar com atualizações de estado de voz em canais do Discord. Ele suporta comandos para tocar músicas, pular faixas, visualizar e limpar a fila, e entrar/sair de canais de voz.
+Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord.py` e `yt_dlp`. O bot foi desenvolvido para tocar músicas do YouTube, Spotify e Deezer, gerenciar filas de músicas e lidar com atualizações de estado de voz em canais do Discord. Ele suporta comandos para tocar músicas, pular e mover faixas, visualizar e limpar a fila, e entrar/sair de canais de voz.
 
 ## Dependências
 
@@ -8,6 +8,7 @@ Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord
 - `discord.py`: Um wrapper Python para a API do Discord.
 - `yt_dlp`: Uma biblioteca de download do YouTube que fornece capacidades de extração para vídeos e playlists do YouTube.
 - `spotipy`: Uma biblioteca para interagir com a API do Spotify.
+- `deezer-python`: Uma bibloteca para interagir com a API do Deezer.
 - `pynacl`: Uma biblioteca para suporte de voz no `discord.py`.
 - `python-dotenv`: Uma biblioteca para carregar variáveis de ambiente a partir de um arquivo `.env`.
 
