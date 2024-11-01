@@ -11,6 +11,16 @@ from utils.send_embed import send_simple_embed
 from utils.queue_manager import QueueManager
 
 previous_now_playing_msgs = {}
+send_queue_finish_msg = True
+
+send_queue_finish_msg = True
+
+def get_send_queue_finish_msg():
+    return send_queue_finish_msg
+
+def set_send_queue_finish_msg(value: bool):
+    global send_queue_finish_msg
+    send_queue_finish_msg = value
 
 async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
     guild_id = ctx.guild.id
@@ -26,6 +36,10 @@ async def play_next(ctx: commands.Context, bot, queue_manager: QueueManager):
         if msg:
             await msg.delete()
 
+        if not get_send_queue_finish_msg():
+            set_send_queue_finish_msg(True)
+            return
+        
         if not queue:
             await send_simple_embed(
                 ctx, "A fila de músicas terminou. Adicione mais músicas para continuar ouvindo!",

@@ -8,7 +8,7 @@ Este é um bot para Discord escrito em Python utilizando as bibliotecas `discord
 - `discord.py`: Um wrapper Python para a API do Discord.
 - `yt_dlp`: Uma biblioteca de download do YouTube que fornece capacidades de extração para vídeos e playlists do YouTube.
 - `spotipy`: Uma biblioteca para interagir com a API do Spotify.
-- `deezer-python`: Uma bibloteca para interagir com a API do Deezer.
+- `deezer-python`: Uma biblioteca para interagir com a API do Deezer.
 - `pynacl`: Uma biblioteca para suporte de voz no `discord.py`.
 - `python-dotenv`: Uma biblioteca para carregar variáveis de ambiente a partir de um arquivo `.env`.
 

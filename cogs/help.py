@@ -40,6 +40,7 @@ class Help(commands.Cog):
             "💎 Comandos Básicos": [
                 ('play', 'play [link/nome]'),
                 ('skip', None),
+                ('stop', None),
                 ('queue', None),
             ],
             "🎵 Plataformas": [
@@ -48,6 +49,7 @@ class Help(commands.Cog):
                 ('deezer', 'deezer [link/nome]')
             ],
             "🎶 Comandos de Fila": [
+                ('stop', None),
                 ('queue', None),
                 ('skipto', None),
                 ('remove', 'remove [index]'),
