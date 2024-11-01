@@ -45,7 +45,7 @@ class PlaySpotify(commands.Cog):
                     tracks = album['tracks']['items']
                 elif "track" in search:
                     track = self.sp.track(search)
-                    entity_name, tracks = track['name'], [track]
+                    entity_name, tracks = None, [track]
                 elif is_valid_url(search):
                     await send_simple_embed(ctx, "Este link não é válido!", discord.Color.red())
                     return
