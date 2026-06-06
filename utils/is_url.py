@@ -14,7 +14,7 @@ def is_youtube_url(url):
 
 def is_youtube_playlist_url(url):
     playlist_regex = re.compile(
-        r'^(https?\:\/\/)?(www\.youtube\.com|music\.youtube\.com)\/(playlist\?|.*[?&]list=)[A-Za-z0-9_-]+($|[?&])'
+        r'^(https?\:\/\/)?((www\.)?youtube\.com|music\.youtube\.com)\/(playlist\?|.*[?&]list=)[A-Za-z0-9_-]+($|[?&])'
     )
     return playlist_regex.match(url) is not None and 'v=' not in url
 
