@@ -4,3 +4,4 @@ spotipy
 deezer-python
 pynacl 
 python-dotenv
+davey
