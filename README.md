@@ -53,9 +53,55 @@ FFMPEG_OPTIONS = {
 }
 ```
 
-## Executando o Bot
+## Executando com Docker (Recomendado)
 
-Execute o bot usando o seguinte comando:
+O projeto está totalmente configurado para rodar em um container Docker e iniciar automaticamente ao ligar o computador (graças à diretiva `restart: unless-stopped` combinada com o serviço Docker do sistema).
+
+### 1. Configurar variáveis de ambiente
+Crie ou edite o arquivo `.env` na raiz do projeto com seus tokens:
+```env
+TOKEN=SEU_TOKEN_DO_DISCORD
+SPOTIPY_CLIENT_ID=SEU_CLIENT_ID
+SPOTIPY_CLIENT_SECRET=SEU_CLIENT_SECRET
+```
+
+### 2. Iniciar o Bot em segundo plano
+```sh
+docker compose up -d --build
+```
+
+O bot será compilado e iniciado em background.
+
+### 3. Gerenciamento do Container
+
+- **Ver logs em tempo real:**
+  ```sh
+  docker compose logs -f
+  ```
+
+- **Ver status do container:**
+  ```sh
+  docker compose ps
+  ```
+
+- **Reiniciar o bot:**
+  ```sh
+  docker compose restart
+  ```
+
+- **Parar o bot:**
+  ```sh
+  docker compose down
+  ```
+
+### Inicialização Automática no Boot
+O serviço utiliza `restart: unless-stopped`. Como o serviço do Docker no Linux é habilitado na inicialização (`sudo systemctl enable docker`), o container do bot subirá automaticamente sempre que o computador for ligado ou reiniciado, sem a necessidade de comandos manuais.
+
+---
+
+## Execução Manual (Sem Docker)
+
+Execute o bot diretamente no Python:
 
 ```sh
 python main.py

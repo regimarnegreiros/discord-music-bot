@@ -1,0 +1,12 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: discord-music-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Persiste o arquivo de cache do Spotify entre reinicializações
+      - ./.cache:/app/.cache

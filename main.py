@@ -44,6 +44,9 @@ async def on_ready():
 
 
 async def main():
+    if not TOKEN:
+        print("ERRO: Variável TOKEN não encontrada. Preencha seu token do Discord no arquivo .env.")
+        return
     async with bot:
         await bot.start(TOKEN)
 
