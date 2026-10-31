@@ -44,7 +44,29 @@ async def on_ready():
 
 
 async def main():
-    async with bot:
-        await bot.start(TOKEN)
+    if not TOKEN:
+        print("\n❌ ERRO: A variável TOKEN não foi encontrada no arquivo .env.")
+        print("Configure seu token do Discord no arquivo .env e reinicie o container.\n")
+        await asyncio.sleep(60)
+        return
+
+    try:
+        async with bot:
+            await bot.start(TOKEN)
+    except discord.errors.LoginFailure:
+        print("\n" + "=" * 65)
+        print("❌ [ERRO DE AUTENTICAÇÃO] O TOKEN do Discord é inválido ou expirou!")
+        print("A API do Discord rejeitou a conexão com erro 401: Unauthorized.")
+        print("\nPara corrigir:")
+        print(" 1. Acesse https://discord.com/developers/applications")
+        print(" 2. Selecione sua aplicação -> menu 'Bot' -> clique em 'Reset Token'")
+        print(" 3. Copie o novo token e cole no arquivo .env:")
+        print("    TOKEN=seu_novo_token_aqui")
+        print(" 4. Reinicie o container com: docker compose restart")
+        print("=" * 65 + "\n")
+        await asyncio.sleep(60)
+    except Exception as e:
+        print(f"\n❌ [ERRO INESPERADO AO INICIAR O BOT]: {e}\n")
+        await asyncio.sleep(60)
 
 asyncio.run(main())
