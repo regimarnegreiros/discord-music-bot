@@ -7,6 +7,4 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    volumes:
-      # Persiste o arquivo de cache do Spotify entre reinicializações
-      - ./.cache:/app/.cache
+
