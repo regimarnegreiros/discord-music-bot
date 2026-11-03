@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import os
 import asyncio
+from pathlib import Path
 from dotenv import load_dotenv
 from config.settings import PREFIX
 
@@ -17,12 +18,13 @@ permissions.voice_states = True
 bot = commands.Bot(command_prefix=PREFIX, intents=permissions)
 
 async def load_cogs():
-    for arquivo in os.listdir('cogs'):
-        if arquivo.endswith('.py'):
+    for path in sorted(Path('cogs').rglob('*.py')):
+        if not path.name.startswith('_'):
+            module = '.'.join(path.with_suffix('').parts)
             try:
-                await bot.load_extension(f"cogs.{arquivo[:-3]}")
+                await bot.load_extension(module)
             except Exception as e:
-                print(f'Erro ao carregar cog {arquivo}: {e}')
+                print(f'Erro ao carregar cog {module}: {e}')
 
 
 ## Comandos gerais:
@@ -69,4 +71,5 @@ async def main():
         print(f"\n❌ [ERRO INESPERADO AO INICIAR O BOT]: {e}\n")
         await asyncio.sleep(60)
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())
